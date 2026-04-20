@@ -1,0 +1,200 @@
+.app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+}
+
+.container {
+  width: min(1600px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 980px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  position: sticky;
+  top: 18px;
+  height: calc(100svh - 36px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 980px) {
+  .sidebar {
+    position: relative;
+    height: auto;
+  }
+}
+
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.brandTitle {
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.brandTag {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav a {
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 160ms ease, border 160ms ease, background 160ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav a:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.nav a.active {
+  border-color: rgba(124, 58, 237, 0.55);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.18) inset;
+}
+
+.main {
+  padding: 18px 0 34px;
+}
+
+/* 3D canvases */
+.globeRiskCanvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* allow custom pinch/drag handling */
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.topbarTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topbarTitle h1 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
+.topbarTitle p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+}
+
+.card {
+  padding: 14px;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.2px;
+}
+
+.subtle {
+  color: var(--muted);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.table th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+.table td {
+  padding: 12px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table tr td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+
+.table tr td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+.rowHover {
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.rowHover:hover td {
+  background: rgba(255, 255, 255, 0.085);
+}
+
+.rowHover:hover {
+  transform: translateY(-1px);
+}

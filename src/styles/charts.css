@@ -1,0 +1,13 @@
+.chartWrap {
+  height: 260px;
+}
+
+.chartWrap canvas {
+  max-height: 260px;
+}
+
+@media (max-width: 980px) {
+  .chartWrap {
+    height: 240px;
+  }
+}
