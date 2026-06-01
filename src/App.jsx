@@ -9,6 +9,7 @@ const SatelliteRiskPage = lazy(() => import('./pages/SatelliteRiskPage'))
 const GridRiskPage = lazy(() => import('./pages/GridRiskPage'))
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
 const GlobeRiskPage = lazy(() => import('./pages/GlobeRiskPage'))
+const SolarSystemPage = lazy(() => import('./pages/SolarSystemPage'))
 
 function Loading() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/satellites" element={<SatelliteRiskPage />} />
+            <Route path="/solar-system" element={<SolarSystemPage />} />
             <Route path="/globe-risk" element={<GlobeRiskPage />} />
             <Route path="/grid-risk" element={<GridRiskPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />

@@ -4,6 +4,7 @@ const links = [
   { to: '/', label: 'Home', hint: 'Globe' },
   { to: '/dashboard', label: 'Dashboard', hint: 'Ops' },
   { to: '/satellites', label: 'HelioScar', hint: 'Risk' },
+  { to: '/solar-system', label: 'Solar System', hint: '3D' },
   { to: '/globe-risk', label: 'Globe Risk', hint: '3D' },
   { to: '/grid-risk', label: 'MagStorm Shield', hint: 'Grid' },
   { to: '/analytics', label: 'Analytics', hint: 'Charts' },

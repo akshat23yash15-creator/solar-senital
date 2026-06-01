@@ -1,6 +1,16 @@
 import { motion as Motion } from 'framer-motion'
 import RiskBadge from './RiskBadge'
 
+function Field({ label, value }) {
+  if (value === null || value === undefined || value === '') return null
+  return (
+    <div className="pill">
+      <span className="pill-dot" style={{ background: 'rgba(255,255,255,0.5)' }} />
+      {label}: <span style={{ fontWeight: 700 }}>{value}</span>
+    </div>
+  )
+}
+
 export default function SatelliteDetails({ satellite, onClose }) {
   if (!satellite) return null
 
@@ -39,15 +49,19 @@ export default function SatelliteDetails({ satellite, onClose }) {
           Risk Score: <span style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>{satellite.riskScore}</span>
         </div>
         <RiskBadge level={satellite.level} />
-        <div className="pill">
-          <span className="pill-dot" style={{ background: 'rgba(255,255,255,0.5)' }} />
-          Status: <span style={{ fontWeight: 700 }}>{satellite.status}</span>
-        </div>
+        <Field label="Status" value={satellite.status} />
+        <Field label="Altitude" value={satellite.altitudeKm != null ? `${satellite.altitudeKm} km` : null} />
+        <Field label="Inclination" value={satellite.inclinationDeg != null ? `${satellite.inclinationDeg} deg` : null} />
+        <Field label="Velocity" value={satellite.velocityKms != null ? `${satellite.velocityKms} km/s` : null} />
+        <Field label="Operator" value={satellite.operator} />
+        <Field label="Country" value={satellite.country} />
       </div>
 
-      <div className="subtle" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.45 }}>
-        Demo note: details are hardcoded now. Later we’ll swap this with an API response + real telemetry streams.
-      </div>
+      {satellite.lastUpdated ? (
+        <div className="subtle" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.45 }}>
+          Last updated: {satellite.lastUpdated}
+        </div>
+      ) : null}
     </Motion.div>
   )
 }

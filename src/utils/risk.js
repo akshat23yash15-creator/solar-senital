@@ -9,6 +9,7 @@ export function riskColor(level) {
     case 'high':
       return 'var(--risk-high)'
     case 'medium':
+    case 'normal':
       return 'var(--risk-med)'
     default:
       return 'var(--risk-low)'
@@ -21,6 +22,7 @@ export function riskColorThree(level) {
     case 'high':
       return '#ff4d6d'
     case 'medium':
+    case 'normal':
       return '#ffd166'
     default:
       return '#22c55e'
@@ -29,5 +31,6 @@ export function riskColorThree(level) {
 
 export function formatRiskLabel(level) {
   if (!level) return ''
+  if (level === 'medium') return 'Normal'
   return level[0].toUpperCase() + level.slice(1)
 }

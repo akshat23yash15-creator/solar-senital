@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import dayTexture from '../assets/day.jpg.jpeg'
@@ -6,12 +6,91 @@ import nightTexture from '../assets/night.png'
 import cloudsTexture from '../assets/clouds.png'
 import normalTexture from '../assets/normal.jpg.jpeg'
 import specularTexture from '../assets/specular.jpg.jpeg'
+import { riskColorThree } from '../utils/risk'
 
 const EARTH_RADIUS = 5.25
+const GENERIC_SATELLITE_COUNT = 600
 
-export default function GlobeRiskScene({ className }) {
+function stableHash(input) {
+  let hash = 0
+  const str = String(input)
+  for (let i = 0; i < str.length; i += 1) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+function toOrbitType(text) {
+  if (!text) return 'LEO'
+  const orbit = String(text).toUpperCase()
+  if (orbit.includes('GEO')) return 'GEO'
+  if (orbit.includes('MEO')) return 'MEO'
+  if (orbit.includes('HEO')) return 'HEO'
+  return 'LEO'
+}
+
+function orbitAltitudeFromType(type) {
+  switch (type) {
+    case 'GEO':
+      return 1.65
+    case 'MEO':
+      return 1.1
+    case 'HEO':
+      return 1.45
+    default:
+      return 0.6
+  }
+}
+
+function deriveLatLon(satellite, index) {
+  if (Number.isFinite(satellite.latitude) && Number.isFinite(satellite.longitude)) {
+    return { lat: satellite.latitude, lon: satellite.longitude }
+  }
+
+  const h = stableHash(`${satellite.id}-${satellite.name}-${index}`)
+  const lat = ((h % 14000) / 100) - 70
+  const lon = (((h >> 3) % 36000) / 100) - 180
+  return { lat, lon }
+}
+
+function createOrbitGeometry(radius, segments = 240) {
+  const points = []
+  for (let i = 0; i <= segments; i += 1) {
+    const t = (i / segments) * Math.PI * 2
+    points.push(new THREE.Vector3(Math.cos(t) * radius, 0, Math.sin(t) * radius))
+  }
+  return new THREE.BufferGeometry().setFromPoints(points)
+}
+
+export default function GlobeRiskScene({ className, satellites = [], onSelectSatellite, staticSatellites = false }) {
   const mountRef = useRef(null)
   const rafRef = useRef(0)
+  const clickableRef = useRef([])
+
+  const preparedSatellites = useMemo(() => {
+    return satellites.map((satellite, index) => {
+      const level = satellite.level === 'normal' ? 'medium' : satellite.level || 'low'
+      const orbitType = toOrbitType(satellite.orbit)
+      const baseAltitude = Number.isFinite(satellite.altitudeKm)
+        ? Math.max(0.35, Math.min(2.1, satellite.altitudeKm / 18000))
+        : orbitAltitudeFromType(orbitType)
+      const { lat, lon } = deriveLatLon(satellite, index)
+
+      return {
+        ...satellite,
+        level,
+        color: riskColorThree(level),
+        altitude: baseAltitude,
+        lat,
+        lon,
+        speed: 0.12 + (stableHash(satellite.id) % 9) * 0.015,
+        phase: (stableHash(satellite.name) % 628) / 100,
+        staticAngle: (stableHash(`${satellite.id}-angle`) % 628) / 100,
+        inclination: ((stableHash(`${satellite.id}-inc`) % 70) - 35) * (Math.PI / 180),
+      }
+    })
+  }, [satellites])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -148,6 +227,12 @@ export default function GlobeRiskScene({ className }) {
     const gridGroup = new THREE.Group()
     scene.add(gridGroup)
 
+    const orbitGroup = new THREE.Group()
+    scene.add(orbitGroup)
+
+    const markerGroup = new THREE.Group()
+    scene.add(markerGroup)
+
     const createLatitudeGeometry = (lat) => {
       const r = EARTH_RADIUS + 0.055
       const segments = 240
@@ -221,6 +306,87 @@ export default function GlobeRiskScene({ className }) {
     )
     gridGroup.add(meridianLine)
 
+    const genericGeometry = new THREE.BufferGeometry()
+    const genericPositions = new Float32Array(GENERIC_SATELLITE_COUNT * 3)
+    const genericRadius = EARTH_RADIUS + 0.8
+
+    for (let i = 0; i < GENERIC_SATELLITE_COUNT; i += 1) {
+      const u = (i + 0.5) / GENERIC_SATELLITE_COUNT
+      const v = ((i * 233) % GENERIC_SATELLITE_COUNT) / GENERIC_SATELLITE_COUNT
+      const theta = 2 * Math.PI * v
+      const phi = Math.acos(2 * u - 1)
+      const x = genericRadius * Math.sin(phi) * Math.cos(theta)
+      const y = genericRadius * Math.cos(phi)
+      const z = genericRadius * Math.sin(phi) * Math.sin(theta)
+      const p = i * 3
+      genericPositions[p] = x
+      genericPositions[p + 1] = y
+      genericPositions[p + 2] = z
+    }
+
+    genericGeometry.setAttribute('position', new THREE.BufferAttribute(genericPositions, 3))
+    const genericMaterial = new THREE.PointsMaterial({
+      color: '#73c8ff',
+      size: 0.05,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+    const genericSatellites = new THREE.Points(genericGeometry, genericMaterial)
+    scene.add(genericSatellites)
+
+    const satGeometry = new THREE.SphereGeometry(0.07, 16, 16)
+    const satObjects = preparedSatellites.map((satellite) => {
+      const orbitRadius = EARTH_RADIUS + satellite.altitude
+      const orbitGeometry = createOrbitGeometry(orbitRadius)
+      const orbitMaterial = new THREE.LineBasicMaterial({
+        color: satellite.color,
+        transparent: true,
+        opacity: satellite.level === 'low' ? 0.2 : 0.38,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+      const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial)
+      orbit.rotation.x = satellite.inclination
+      orbit.rotation.y = (satellite.lon * Math.PI) / 180
+      orbit.rotation.z = (satellite.lat * Math.PI) / 180
+      orbitGroup.add(orbit)
+
+      const satMaterial = new THREE.MeshPhongMaterial({
+        color: satellite.color,
+        emissive: new THREE.Color(satellite.color),
+        emissiveIntensity: satellite.level === 'high' ? 1.8 : satellite.level === 'medium' ? 1.3 : 0.9,
+        shininess: 90,
+        transparent: true,
+        opacity: 0.95,
+      })
+      const mesh = new THREE.Mesh(satGeometry, satMaterial)
+      mesh.userData.satellite = satellite
+      markerGroup.add(mesh)
+
+      return { satellite, mesh, orbit, orbitRadius }
+    })
+
+    clickableRef.current = satObjects.map((s) => s.mesh)
+
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+
+    const onPointerDown = (event) => {
+      const rect = renderer.domElement.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+
+      const hits = raycaster.intersectObjects(clickableRef.current)
+      if (hits.length > 0) {
+        onSelectSatellite?.(hits[0].object.userData.satellite)
+      }
+    }
+
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
+
     const resize = () => {
       const width = mount.clientWidth
       const height = mount.clientHeight
@@ -238,9 +404,45 @@ export default function GlobeRiskScene({ className }) {
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const delta = clock.getDelta()
+      const elapsed = clock.getElapsedTime()
 
       earth.rotation.y += delta * 0.03
       clouds.rotation.y += delta * 0.038
+      genericSatellites.rotation.y += delta * 0.018
+
+      satObjects.forEach((obj) => {
+        if (staticSatellites) {
+          const angle = obj.satellite.staticAngle
+          const local = new THREE.Vector3(
+            Math.cos(angle) * obj.orbitRadius,
+            0,
+            Math.sin(angle) * obj.orbitRadius
+          )
+          local.applyEuler(obj.orbit.rotation)
+          obj.mesh.position.copy(local)
+        } else {
+          const angle = elapsed * obj.satellite.speed + obj.satellite.phase
+          const local = new THREE.Vector3(
+            Math.cos(angle) * obj.orbitRadius,
+            0,
+            Math.sin(angle) * obj.orbitRadius
+          )
+          local.applyEuler(obj.orbit.rotation)
+          obj.mesh.position.copy(local)
+        }
+
+        if (obj.satellite.level === 'high' || obj.satellite.level === 'medium') {
+          const pulse = 0.5 + 0.5 * Math.sin(elapsed * (obj.satellite.level === 'high' ? 8 : 5))
+          const minScale = obj.satellite.level === 'high' ? 0.95 : 0.85
+          const maxScale = obj.satellite.level === 'high' ? 1.6 : 1.35
+          const s = minScale + (maxScale - minScale) * pulse
+          obj.mesh.scale.setScalar(s)
+          obj.mesh.material.opacity = 0.6 + 0.4 * pulse
+          obj.mesh.material.emissiveIntensity = obj.satellite.level === 'high' ? 1.4 + pulse : 1 + pulse * 0.6
+          obj.orbit.material.opacity = obj.satellite.level === 'high' ? 0.26 + pulse * 0.45 : 0.2 + pulse * 0.3
+        }
+      })
+
       controls.update()
       renderer.render(scene, camera)
     }
@@ -251,6 +453,7 @@ export default function GlobeRiskScene({ className }) {
       cancelAnimationFrame(rafRef.current)
       ro.disconnect()
       controls.dispose()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
       renderer.dispose()
 
       earth.geometry.dispose()
@@ -266,6 +469,16 @@ export default function GlobeRiskScene({ className }) {
       primeMeridian.dispose()
       gridGroup.children.forEach((child) => child.material?.dispose?.())
 
+      satGeometry.dispose()
+      satObjects.forEach((obj) => {
+        obj.mesh.material.dispose()
+        obj.orbit.geometry.dispose()
+        obj.orbit.material.dispose()
+      })
+
+      genericGeometry.dispose()
+      genericMaterial.dispose()
+
       dayMap.dispose()
       normalMap.dispose()
       specularMap.dispose()
@@ -275,8 +488,10 @@ export default function GlobeRiskScene({ className }) {
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement)
       }
+
+      clickableRef.current = []
     }
-  }, [])
+  }, [onSelectSatellite, preparedSatellites])
 
   return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%', position: 'relative' }} />
 }

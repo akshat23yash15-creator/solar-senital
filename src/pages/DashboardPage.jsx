@@ -1,11 +1,11 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion as Motion } from 'framer-motion'
 import PageTransition from '../components/PageTransition'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import RiskBadge from '../components/RiskBadge'
-import { alerts, liveStats, satellites } from '../utils/dummyData'
-import { riskLevelFromScore } from '../utils/risk'
+import { alerts, liveStats } from '../utils/dummyData'
+import { fetchHelioRiskSatellites } from '../utils/helioApi'
 
 function StatCard({ label, value, accent }) {
   return (
@@ -28,12 +28,38 @@ function StatCard({ label, value, accent }) {
 }
 
 export default function DashboardPage() {
+  const [satellites, setSatellites] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoading(true)
+      setError('')
+      try {
+        const data = await fetchHelioRiskSatellites()
+        if (!cancelled) setSatellites(data)
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to load satellites from API.')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const leaderboard = useMemo(() => {
     return [...satellites]
       .sort((a, b) => b.riskScore - a.riskScore)
-      .slice(0, 5)
-      .map((s, idx) => ({ ...s, rank: idx + 1, level: riskLevelFromScore(s.riskScore) }))
-  }, [])
+      .slice(0, 10)
+      .map((s, idx) => ({ ...s, rank: idx + 1 }))
+  }, [satellites])
 
   return (
     <PageTransition>
@@ -52,30 +78,36 @@ export default function DashboardPage() {
 
               <div className="card glass neon-border" style={{ gridColumn: 'span 7' }}>
                 <h3>Satellite Risk Leaderboard</h3>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Orbit</th>
-                      <th>Risk</th>
-                      <th>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaderboard.map((s) => (
-                      <tr key={s.name} className="rowHover">
-                        <td style={{ color: 'var(--muted)' }}>{s.rank}</td>
-                        <td style={{ fontWeight: 650 }}>{s.name}</td>
-                        <td className="subtle">{s.orbit}</td>
-                        <td>
-                          <RiskBadge level={s.level} />
-                        </td>
-                        <td style={{ fontFamily: 'var(--mono)' }}>{s.riskScore}</td>
+                {isLoading ? (
+                  <div className="subtle" style={{ fontSize: 13 }}>Loading satellites from /api/helio-risk...</div>
+                ) : error ? (
+                  <div className="subtle" style={{ fontSize: 13, color: 'var(--risk-high)' }}>{error}</div>
+                ) : (
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Orbit</th>
+                        <th>Risk</th>
+                        <th>Score</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((s) => (
+                        <tr key={s.id} className="rowHover">
+                          <td style={{ color: 'var(--muted)' }}>{s.rank}</td>
+                          <td style={{ fontWeight: 650 }}>{s.name}</td>
+                          <td className="subtle">{s.orbit}</td>
+                          <td>
+                            <RiskBadge level={s.level} />
+                          </td>
+                          <td style={{ fontFamily: 'var(--mono)' }}>{s.riskScore}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
 
               <div className="card glass neon-border" style={{ gridColumn: 'span 5' }}>
