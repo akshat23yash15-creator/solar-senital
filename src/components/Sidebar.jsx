@@ -6,7 +6,8 @@ const links = [
   { to: '/satellites', label: 'HelioScar', hint: 'Risk' },
   { to: '/solar-system', label: 'Solar System', hint: '3D' },
   { to: '/globe-risk', label: 'Globe Risk', hint: '3D' },
-  { to: '/grid-risk', label: 'MagStorm Shield', hint: 'Grid' },
+  { to: '/magstorm', label: 'MagStorm Shield', hint: 'Live' },
+  { to: '/grid-heatmap', label: 'Grid Heatmap', hint: 'Map' },
   { to: '/analytics', label: 'Analytics', hint: 'Charts' },
 ]
 

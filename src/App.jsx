@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { MagStormProvider } from './context/MagStormContext'
 
 import HomePage from './pages/HomePage'
 
@@ -10,6 +11,8 @@ const GridRiskPage = lazy(() => import('./pages/GridRiskPage'))
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
 const GlobeRiskPage = lazy(() => import('./pages/GlobeRiskPage'))
 const SolarSystemPage = lazy(() => import('./pages/SolarSystemPage'))
+const MagStormDashboardPage = lazy(() => import('./pages/MagStormDashboardPage'))
+const GridRiskMapPage = lazy(() => import('./pages/GridRiskMapPage'))
 
 function Loading() {
   return (
@@ -46,6 +49,7 @@ export default function App() {
     <div className="app-shell">
       <div className="app-bg" />
 
+      <MagStormProvider>
       <Suspense fallback={<Loading />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -56,10 +60,13 @@ export default function App() {
             <Route path="/globe-risk" element={<GlobeRiskPage />} />
             <Route path="/grid-risk" element={<GridRiskPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/magstorm" element={<MagStormDashboardPage />} />
+            <Route path="/grid-heatmap" element={<GridRiskMapPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
       </Suspense>
+      </MagStormProvider>
     </div>
   )
 }
