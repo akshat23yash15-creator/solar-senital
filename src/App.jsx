@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { MagStormProvider } from './context/MagStormContext'
+import { SolarPredictionProvider } from './context/SolarPredictionContext'
 
 import HomePage from './pages/HomePage'
 
@@ -49,6 +50,7 @@ export default function App() {
     <div className="app-shell">
       <div className="app-bg" />
 
+      <SolarPredictionProvider>
       <MagStormProvider>
       <Suspense fallback={<Loading />}>
         <AnimatePresence mode="wait">
@@ -67,6 +69,7 @@ export default function App() {
         </AnimatePresence>
       </Suspense>
       </MagStormProvider>
+      </SolarPredictionProvider>
     </div>
   )
 }

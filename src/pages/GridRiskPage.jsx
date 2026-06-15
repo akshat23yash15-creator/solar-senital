@@ -9,7 +9,6 @@ import '../styles/map.css'
 
 export default function GridRiskPage() {
   const [level, setLevel] = useState('high')
-+-
   const actions = useMemo(() => suggestedActions[level], [level])
 
   return (

@@ -1,14 +1,35 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import axios from 'axios'
 import { motion as Motion, AnimatePresence } from 'framer-motion'
+import {
+  AlertTriangle, Globe, Shield, FileText, Sun, FlaskConical,
+  Clock, Zap, Plane, Activity, CheckCircle, RefreshCw
+} from 'lucide-react'
 import PageTransition from '../components/PageTransition'
 import Sidebar from '../components/Sidebar'
 import { useMagStormMode } from '../context/MagStormContext'
 import MagStormLoader from '../components/MagStormLoader'
 
-/* ══════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════ */
+/* Tiny inline SVG helpers — no emoji, no extra deps */
+function LiveDot({ active }) {
+  return (
+    <span style={{
+      width: 7, height: 7, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+      background: active ? '#35f28c' : 'rgba(255,255,255,0.25)',
+      boxShadow: active ? '0 0 6px #35f28c' : 'none',
+      animation: active ? 'mgPulse 2s ease-in-out infinite' : 'none',
+    }} />
+  )
+}
+function SimIcon() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+      <path d="M4.5 1L8 8H1L4.5 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+
 function pipelineColor(s) {
   if (!s) return 'var(--muted)'
   const v = String(s).toUpperCase()
@@ -182,7 +203,10 @@ function ModeToggle({ mode, onChange }) {
             ? m === 'live' ? 'var(--risk-low)' : 'var(--risk-high)'
             : 'var(--muted)',
         }}>
-          {m === 'live' ? '⬤ LIVE' : '⚠ SIM'}
+          {m === 'live'
+            ? <span style={{ display:'inline-flex', alignItems:'center', gap:5 }}><LiveDot active={mode === 'live'} /> LIVE</span>
+            : <span style={{ display:'inline-flex', alignItems:'center', gap:5 }}><SimIcon /> SIM</span>
+          }
         </button>
       ))}
     </div>
@@ -236,15 +260,18 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
           fontSize: 22, flexShrink: 0,
           boxShadow: `0 0 20px ${bannerColor}44`,
           animation: isSevere ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
-        }}>⚠</div>
+        }}>
+          <AlertTriangle size={20} color={bannerColor} strokeWidth={2} />
+        </div>
 
         {/* Title */}
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 10, letterSpacing: '2.5px', color: bannerColor, fontFamily: 'var(--mono)', marginBottom: 4, opacity: 0.8 }}>
             SOLAR SENTINEL COMMAND · {mode.toUpperCase()} MODE
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.4px', color: 'var(--text)' }}>
-            ⚠ SOLAR STORM STATUS
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.4px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={18} color={bannerColor} strokeWidth={2} />
+            SOLAR STORM STATUS
           </div>
         </div>
 
@@ -289,8 +316,9 @@ function ThreatMeter({ kpIndex }) {
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
-        🌐 Global Threat Level
+      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Globe size={12} color="currentColor" />
+        Global Threat Level
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {THREAT_META.map((t, i) => {
@@ -357,8 +385,9 @@ function DefconCard({ kpIndex, stormClass, mode }) {
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
-        🛡 Space Weather DEFCON
+      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Shield size={12} color="currentColor" />
+        Space Weather DEFCON
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {[1, 2, 3, 4, 5].map(lvl => {
@@ -444,14 +473,15 @@ function MissionBrief({ data, mode }) {
     `  └─ AUTOMATED ACTIONS QUEUED:  ${actCnt}`,
     ``,
     mode === 'simulation'
-      ? `⚠  SIMULATION ACTIVE — EMERGENCY PROTOCOLS ENGAGED`
-      : `●  STATUS: MONITORING NOMINAL — ALL SYSTEMS REPORTING`,
+      ? `[!] SIMULATION ACTIVE — EMERGENCY PROTOCOLS ENGAGED`
+      : `[OK] STATUS: MONITORING NOMINAL — ALL SYSTEMS REPORTING`,
   ]
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-        📋 Mission Brief
+      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <FileText size={12} color="currentColor" />
+        Mission Brief
       </div>
       <div style={{
         background: 'rgba(0,0,0,0.55)', borderRadius: 8,
@@ -472,9 +502,9 @@ function MissionBrief({ data, mode }) {
             transition={{ delay: i * 0.025 }}
             style={{
               whiteSpace: 'pre',
-              color: line.startsWith('>')     ? '#22d3ee'
-                   : line.startsWith('⚠')    ? '#ffbf1f'
-                   : line.startsWith('●')    ? '#35f28c'
+              color: line.startsWith('>')      ? '#22d3ee'
+                   : line.startsWith('[!]')   ? '#ffbf1f'
+                   : line.startsWith('[OK]')  ? '#35f28c'
                    : line.startsWith('STORM') || line.startsWith('GEO') || line.startsWith('SOLAR') || line.startsWith('ESTIM') ? 'rgba(255,255,255,0.9)'
                    : line.startsWith('INFRA') ? '#22d3ee'
                    : 'rgba(255,255,255,0.6)',
@@ -501,12 +531,12 @@ function StormTimeline({ data }) {
   const actCnt   = (data.automated_actions     || []).length
 
   const stages = [
-    { id:'detect',   icon:'☀',  label:'Solar Activity Detected',   active: kp != null && kp > 0,                          detail: kp != null ? `Kp ${kp}` : 'Monitoring' },
-    { id:'classify', icon:'🔬', label:'Storm Classified',           active: !!sc && sc !== 'NOMINAL',                      detail: sc || 'No storm' },
-    { id:'impact',   icon:'⏱', label:'Earth Impact Countdown',     active: eta != null && eta > 0,                        detail: eta != null ? fmtCountdown(eta) : 'No ETA' },
-    { id:'grid',     icon:'⚡', label:'Grid Monitoring',            active: gridCnt > 0,                                   detail: `${gridCnt} regions` },
-    { id:'aviation', icon:'✈', label:'Aviation Monitoring',        active: aviCnt  > 0,                                   detail: `${aviCnt} alerts` },
-    { id:'mitigate', icon:'🛡', label:'Mitigation Actions Active',  active: actCnt  > 0,                                   detail: `${actCnt} actions` },
+    { id:'detect',   Icon: Sun,         label:'Solar Activity Detected',   active: kp != null && kp > 0,       detail: kp != null ? `Kp ${kp}` : 'Monitoring' },
+    { id:'classify', Icon: FlaskConical, label:'Storm Classified',          active: !!sc && sc !== 'NOMINAL',   detail: sc || 'No storm' },
+    { id:'impact',   Icon: Clock,        label:'Earth Impact Countdown',    active: eta != null && eta > 0,     detail: eta != null ? fmtCountdown(eta) : 'No ETA' },
+    { id:'grid',     Icon: Zap,          label:'Grid Monitoring',           active: gridCnt > 0,                detail: `${gridCnt} regions` },
+    { id:'aviation', Icon: Plane,        label:'Aviation Monitoring',       active: aviCnt  > 0,                detail: `${aviCnt} alerts` },
+    { id:'mitigate', Icon: Shield,       label:'Mitigation Actions Active', active: actCnt  > 0,                detail: `${actCnt} actions` },
   ]
 
   let currentIdx = -1
@@ -514,8 +544,9 @@ function StormTimeline({ data }) {
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-        ⚡ Storm Operations Timeline
+      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Activity size={12} color="currentColor" />
+        Storm Operations Timeline
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
         {/* vertical rail */}
@@ -548,7 +579,10 @@ function StormTimeline({ data }) {
                 animation: isCurrent ? 'mgPulse 2s ease-in-out infinite' : 'none',
                 color: isCurrent ? '#000' : isDone ? '#35f28c' : 'rgba(255,255,255,0.4)',
               }}>
-                {isDone ? '✓' : stage.icon}
+                {isDone
+                  ? <CheckCircle size={14} color="#35f28c" strokeWidth={2.5} />
+                  : <stage.Icon size={14} color={isCurrent ? '#000' : 'rgba(255,255,255,0.4)'} strokeWidth={2} />
+                }
               </div>
 
               {/* Content */}
@@ -589,9 +623,9 @@ function ActionTerminal({ actions }) {
 
   function getSev(text) {
     const t = String(text).toLowerCase()
-    if (/critical|emergency|catastrophic/.test(t)) return { icon: '🔴', label: 'CRIT', color: '#ff8080' }
-    if (/warn|alert|elevated|severe/.test(t))       return { icon: '🟡', label: 'WARN', color: '#ffd080' }
-    return                                                  { icon: '🟢', label: 'OK',   color: 'rgba(255,255,255,0.75)' }
+    if (/critical|emergency|catastrophic/.test(t)) return { label: 'CRIT', color: '#ff8080', dotColor: '#ff4040' }
+    if (/warn|alert|elevated|severe/.test(t))       return { label: 'WARN', color: '#ffd080', dotColor: '#ffbf1f' }
+    return                                                  { label: 'OK',   color: 'rgba(255,255,255,0.75)', dotColor: '#35f28c' }
   }
 
   const nowStr = new Date().toISOString().substring(11, 19) + ' UTC'
@@ -610,7 +644,7 @@ function ActionTerminal({ actions }) {
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', display: 'inline-block' }} />
         </div>
         <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', letterSpacing: '0.5px' }}>
-          ● OPERATIONS FEED — AUTOMATED ACTIONS
+          — OPERATIONS FEED — AUTOMATED ACTIONS
         </span>
         <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--mono)' }}>
           {nowStr}
@@ -644,7 +678,11 @@ function ActionTerminal({ actions }) {
                 transition={{ delay: i * 0.05, type: 'spring', stiffness: 200, damping: 20 }}
                 style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '2px 0' }}
               >
-                <span style={{ flexShrink: 0 }}>{sev.icon}</span>
+                <span style={{
+                  flexShrink: 0, width: 8, height: 8, borderRadius: '50%',
+                  background: sev.dotColor, marginTop: 3, display: 'inline-block',
+                  boxShadow: `0 0 5px ${sev.dotColor}88`,
+                }} />
                 <span style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, fontSize: 10, paddingTop: 1 }}>
                   [{String(i + 1).padStart(3, '0')}]
                 </span>
@@ -777,7 +815,7 @@ function AviationTable({ alerts }) {
                   >
                     <td style={{ borderLeft: `3px solid ${isDanger ? rowHex : 'transparent'}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isDanger && <span style={{ fontSize: 10, animation: 'mgPulse 2s ease-in-out infinite' }}>⚠</span>}
+                        {isDanger && <span style={{ width: 7, height: 7, borderRadius: '50%', background: rowHex, display: 'inline-block', boxShadow: `0 0 6px ${rowHex}`, animation: 'mgPulse 2s ease-in-out infinite', flexShrink: 0 }} />}
                         <span style={{ fontFamily: 'var(--mono)', fontWeight: 650, fontSize: 13 }}>{r.route_id}</span>
                       </div>
                     </td>
@@ -890,7 +928,7 @@ export default function MagStormDashboardPage() {
                   <span style={{ color: accent, fontWeight: 650, textTransform: 'uppercase', fontFamily: 'var(--mono)', fontSize: 11 }}>
                     {mode}
                   </span>
-                  {loading && <span style={{ marginLeft: 8, color: 'var(--muted)', animation: 'mgBlink 1.2s ease infinite' }}>⟳ refreshing…</span>}
+                  {loading && <span style={{ marginLeft: 8, color: 'var(--muted)', animation: 'mgBlink 1.2s ease infinite', fontFamily: 'var(--mono)', fontSize: 11 }}>↻ refreshing…</span>}
                 </p>
               </div>
               <div className="topbarRight">
@@ -988,12 +1026,12 @@ export default function MagStormDashboardPage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
                       {[
-                        { label: 'Storm Class',     val: stormClass,            icon: '☀',  color: '#ffbf1f' },
-                        { label: 'Threat Level',    val: threatLevel,           icon: '⚡', color: threatColor },
-                        { label: 'Grid Regions',    val: gridTriggers.length,   icon: '⚡', color: '#3b82f6' },
-                        { label: 'Aviation Alerts', val: aviationAlerts.length, icon: '✈', color: '#22d3ee' },
-                        { label: 'Actions Queued',  val: autoActions.length,    icon: '🛡', color: '#ffbf1f' },
-                      ].map(({ label, val, icon, color }) => (
+                        { label: 'Storm Class',     val: stormClass,            Icon: Sun,      color: '#ffbf1f' },
+                        { label: 'Threat Level',    val: threatLevel,           Icon: Zap,      color: threatColor },
+                        { label: 'Grid Regions',    val: gridTriggers.length,   Icon: Activity, color: '#3b82f6' },
+                        { label: 'Aviation Alerts', val: aviationAlerts.length, Icon: Plane,    color: '#22d3ee' },
+                        { label: 'Actions Queued',  val: autoActions.length,    Icon: Shield,   color: '#ffbf1f' },
+                      ].map(({ label, val, Icon, color }) => (
                         <Motion.div
                           key={label}
                           initial={{ opacity: 0, scale: 0.94 }}
@@ -1005,7 +1043,9 @@ export default function MagStormDashboardPage() {
                             display: 'flex', flexDirection: 'column', gap: 4,
                           }}
                         >
-                          <div style={{ fontSize: 17 }}>{icon}</div>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <Icon size={16} color={color} strokeWidth={1.75} />
+                          </div>
                           <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</div>
                           <div style={{ fontSize: 20, fontWeight: 750, fontFamily: 'var(--mono)', color }}>{val ?? '—'}</div>
                         </Motion.div>
@@ -1037,7 +1077,7 @@ export default function MagStormDashboardPage() {
                           border: '1px solid rgba(255,59,59,0.4)', background: 'rgba(255,59,59,0.1)',
                           animation: 'mgPulse 2s ease-in-out infinite',
                         }}>
-                          ⚠ ALERTS ACTIVE
+                          ALERTS ACTIVE
                         </span>
                       )}
                       <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>

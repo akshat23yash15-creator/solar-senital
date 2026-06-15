@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion as Motion, AnimatePresence } from 'framer-motion'
+import { CheckCircle, Loader, Shield } from 'lucide-react'
 
 /* ─────────────────────────────────────────────────────────────────────
    STATIC DATA
@@ -23,10 +24,10 @@ const PROGRESS_LABELS = [
 ]
 
 const STATUS_ITEMS = [
-  { id: 'noaa',      label: 'NOAA CONNECTED',    sub: 'REAL-TIME FEED',         icon: '✓', color: '#35f28c', spin: false, delay: 0.5  },
-  { id: 'nasa',      label: 'NASA CONNECTED',     sub: 'GOES-19 SATELLITE',      icon: '✓', color: '#35f28c', spin: false, delay: 0.9  },
-  { id: 'telemetry', label: 'TELEMETRY ACTIVE',   sub: '4 MB/S · 22ms LATENCY', icon: '✓', color: '#35f28c', spin: false, delay: 1.3  },
-  { id: 'forecast',  label: 'COMPUTING FORECAST', sub: 'SOLAR-BERT v3.1 · 94%', icon: '⟳', color: '#ffbf1f', spin: true,  delay: 1.7  },
+  { id: 'noaa',      label: 'NOAA CONNECTED',    sub: 'REAL-TIME FEED',         spin: false, delay: 0.5,  color: '#35f28c' },
+  { id: 'nasa',      label: 'NASA CONNECTED',     sub: 'GOES-19 SATELLITE',      spin: false, delay: 0.9,  color: '#35f28c' },
+  { id: 'telemetry', label: 'TELEMETRY ACTIVE',   sub: '4 MB/S · 22ms LATENCY', spin: false, delay: 1.3,  color: '#35f28c' },
+  { id: 'forecast',  label: 'COMPUTING FORECAST', sub: 'SOLAR-BERT v3.1 · 94%', spin: true,  delay: 1.7,  color: '#ffbf1f' },
 ]
 
 const FEED_LINES = [
@@ -552,8 +553,9 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
               }}>
                 <div style={{ display:'flex',gap:14,alignItems:'center' }}>
                   <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.42)',letterSpacing:'1.5px' }}>SYS: ONLINE</span>
-                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1.2px',animation:'ms-blink 2s ease-in-out infinite' }}>
-                    ● TELEMETRY ACTIVE
+                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1.2px',animation:'ms-blink 2s ease-in-out infinite',display:'inline-flex',alignItems:'center',gap:4 }}>
+                    <span style={{width:5,height:5,borderRadius:'50%',background:'#35f28c',display:'inline-block',boxShadow:'0 0 4px #35f28c'}}/>
+                    TELEMETRY ACTIVE
                   </span>
                   <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.35)',letterSpacing:'1.2px' }}>DEFCON 4</span>
                 </div>
@@ -573,7 +575,9 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
                   display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,
                   boxShadow:'0 0 16px rgba(0,229,255,0.18),inset 0 0 16px rgba(0,229,255,0.05)',
                   animation:'ms-pulse 3.5s ease-in-out infinite',
-                }}>🛡</div>
+                }}>
+                  <Shield size={18} color="rgba(0,229,255,0.75)" strokeWidth={1.5} />
+                </div>
                 <div style={{ textAlign:'center' }}>
                   <h1 style={{
                     margin:0,fontSize:'clamp(22px,3.6vw,46px)',
@@ -631,10 +635,11 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
                   background:'rgba(0,4,16,0.7)',flexShrink:0,
                 }}>
                   <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.55)',letterSpacing:'2px' }}>
-                    ◈ INDIA GEOSPATIAL INTELLIGENCE · ACTIVE
+                    INDIA GEOSPATIAL INTELLIGENCE · ACTIVE
                   </span>
-                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1.5px',animation:'ms-blink 2.2s ease-in-out infinite' }}>
-                    ● RADAR SWEEP · 3.6s
+                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1.5px',animation:'ms-blink 2.2s ease-in-out infinite',display:'inline-flex',alignItems:'center',gap:4 }}>
+                    <span style={{width:5,height:5,borderRadius:'50%',background:'#35f28c',display:'inline-block',boxShadow:'0 0 4px #35f28c'}}/>
+                    RADAR SWEEP · 3.6s
                   </span>
                   <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.42)',letterSpacing:'1.5px' }}>
                     2 SECTORS
@@ -691,8 +696,11 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
                   display:'flex',justifyContent:'space-between',alignItems:'center',
                   paddingBottom:6,borderBottom:'1px solid rgba(0,229,255,0.1)',
                 }}>
-                  <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.52)',letterSpacing:'2px' }}>◈ SYSTEMS STATUS</span>
-                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1px',animation:'ms-blink 1.9s ease-in-out infinite' }}>● ONLINE</span>
+                  <span style={{ fontSize:7.5,color:'rgba(0,229,255,0.52)',letterSpacing:'2px' }}>SYSTEMS STATUS</span>
+                  <span style={{ fontSize:7.5,color:'#35f28c',letterSpacing:'1px',animation:'ms-blink 1.9s ease-in-out infinite',display:'inline-flex',alignItems:'center',gap:4 }}>
+                    <span style={{width:5,height:5,borderRadius:'50%',background:'#35f28c',display:'inline-block',boxShadow:'0 0 4px #35f28c'}}/>
+                    ONLINE
+                  </span>
                 </div>
 
                 {/* Status cards */}
@@ -715,9 +723,14 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
                         width:17,height:17,borderRadius:'50%',
                         background:`${item.color}16`,border:`1px solid ${item.color}50`,
                         display:'flex',alignItems:'center',justifyContent:'center',
-                        fontSize:8.5,color:item.color,fontWeight:800,flexShrink:0,
+                        flexShrink:0,
                         animation:item.spin?'ms-spin 1.6s linear infinite':'none',
-                      }}>{item.icon}</div>
+                      }}>
+                        {item.spin
+                          ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                          : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        }
+                      </div>
                       <div style={{ flex:1,minWidth:0 }}>
                         <div style={{ fontSize:8.5,color:item.color,fontWeight:700,letterSpacing:'1px',textTransform:'uppercase' }}>
                           {item.label}
@@ -751,7 +764,10 @@ export default function MagStormLoader({ visible, mode = 'live' }) {
                     <span style={{ fontSize:7,color:'rgba(0,229,255,0.4)',letterSpacing:'1.2px',marginLeft:4 }}>
                       TELEMETRY STREAM
                     </span>
-                    <span style={{ marginLeft:'auto',fontSize:7,color:'#35f28c',animation:'ms-blink 1.6s ease-in-out infinite' }}>● REC</span>
+                    <span style={{ marginLeft:'auto',fontSize:7,color:'#35f28c',animation:'ms-blink 1.6s ease-in-out infinite',display:'inline-flex',alignItems:'center',gap:3 }}>
+                      <span style={{width:4,height:4,borderRadius:'50%',background:'#35f28c',display:'inline-block'}}/>
+                      REC
+                    </span>
                   </div>
                   <div style={{
                     position:'absolute',inset:0,pointerEvents:'none',

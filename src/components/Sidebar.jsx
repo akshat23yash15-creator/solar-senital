@@ -4,11 +4,11 @@ const links = [
   { to: '/', label: 'Home', hint: 'Globe' },
   { to: '/dashboard', label: 'Dashboard', hint: 'Ops' },
   { to: '/satellites', label: 'HelioScar', hint: 'Risk' },
-  { to: '/solar-system', label: 'Solar System', hint: '3D' },
+  { to: '/solar-system', label: 'Solar System', hint: 'AI+3D' },
   { to: '/globe-risk', label: 'Globe Risk', hint: '3D' },
   { to: '/magstorm', label: 'MagStorm Shield', hint: 'Live' },
   { to: '/grid-heatmap', label: 'Grid Heatmap', hint: 'Map' },
-  { to: '/analytics', label: 'Analytics', hint: 'Charts' },
+  { to: '/analytics', label: 'Earth Threat Center', hint: 'Live' },
 ]
 
 export default function Sidebar() {
