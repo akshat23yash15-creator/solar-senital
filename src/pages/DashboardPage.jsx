@@ -10,6 +10,60 @@ import { useSolarPrediction } from '../context/SolarPredictionContext'
 import { alerts, liveStats } from '../utils/dummyData'
 import { fetchHelioRiskSatellites } from '../utils/helioApi'
 
+// ── Inline mini-bar chart for satellite risk scores ──────────────────────────
+function SatRiskMiniChart({ satellites }) {
+  if (!satellites.length) return null
+  const top8 = satellites.slice(0, 8)
+  const max = 100
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {top8.map((s, i) => {
+        const pct = Math.min(100, Math.max(0, s.riskScore))
+        const hex = s.riskScore >= 70 ? '#ff3b3b' : s.riskScore >= 50 ? '#ffbf1f' : '#35f28c'
+        return (
+          <Motion.div
+            key={s.id}
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.04, type: 'spring', stiffness: 220, damping: 24 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+          >
+            {/* Name */}
+            <div style={{
+              width: 130, fontSize: 11, fontFamily: 'var(--mono)',
+              color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}>
+              {s.name}
+            </div>
+            {/* Bar */}
+            <div style={{
+              flex: 1, height: 8, borderRadius: 999,
+              background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%', width: `${(pct / max) * 100}%`,
+                borderRadius: 999,
+                background: `linear-gradient(90deg, ${hex}88, ${hex})`,
+                boxShadow: pct >= 70 ? `0 0 6px ${hex}88` : 'none',
+                transition: 'width 700ms ease',
+              }} />
+            </div>
+            {/* Score */}
+            <div style={{
+              fontSize: 12, fontWeight: 700, fontFamily: 'var(--mono)',
+              color: hex, minWidth: 32, textAlign: 'right', flexShrink: 0,
+            }}>
+              {s.riskScore}
+            </div>
+          </Motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
 function StatCard({ label, value, accent }) {
   return (
     <Motion.div
@@ -201,26 +255,43 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* ── Alerts ── */}
-              <div className="card glass neon-border" style={{ gridColumn: 'span 5' }}>
-                <h3>Alerts</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {alerts.map((a) => (
-                    <Motion.div
-                      key={a.id}
-                      className="glass"
-                      whileHover={{ y: -2 }}
-                      style={{ padding: 12, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                        <div style={{ fontWeight: 700 }}>{a.title}</div>
-                        <RiskBadge level={a.severity} />
-                      </div>
-                      <div className="subtle" style={{ fontSize: 13, marginTop: 6 }}>{a.message}</div>
-                      <div className="subtle" style={{ fontSize: 12, marginTop: 8 }}>{a.time}</div>
-                    </Motion.div>
-                  ))}
+              {/* ── Right column: Risk Profile Chart + Alerts ── */}
+              <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                {/* Satellite Risk Profile mini bar chart */}
+                <div className="card glass neon-border">
+                  <h3 style={{ marginBottom: 14 }}>Satellite Risk Profile</h3>
+                  {isLoading ? (
+                    <div className="subtle" style={{ fontSize: 13 }}>Loading…</div>
+                  ) : error ? (
+                    <div className="subtle" style={{ fontSize: 13, color: 'var(--risk-high)' }}>{error}</div>
+                  ) : (
+                    <SatRiskMiniChart satellites={satellites} />
+                  )}
                 </div>
+
+                {/* Alerts */}
+                <div className="card glass neon-border">
+                  <h3>Alerts</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {alerts.map((a) => (
+                      <Motion.div
+                        key={a.id}
+                        className="glass"
+                        whileHover={{ y: -2 }}
+                        style={{ padding: 12, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                          <div style={{ fontWeight: 700 }}>{a.title}</div>
+                          <RiskBadge level={a.severity} />
+                        </div>
+                        <div className="subtle" style={{ fontSize: 13, marginTop: 6 }}>{a.message}</div>
+                        <div className="subtle" style={{ fontSize: 12, marginTop: 8 }}>{a.time}</div>
+                      </Motion.div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </section>
           </main>

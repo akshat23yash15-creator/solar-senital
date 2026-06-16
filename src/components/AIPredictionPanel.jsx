@@ -241,7 +241,13 @@ export default function AIPredictionPanel({ compact = false }) {
   }, [pendingFile, runManualPrediction])
 
   return (
-    <div className="ai-prediction-panel">
+    <div className="ai-prediction-panel" style={{
+      overflowY: 'auto',
+      maxHeight: '100%',
+      paddingRight: 2,
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'rgba(34,211,238,0.18) transparent',
+    }}>
       {/* Header row */}
       <div className="ai-dashboard-header">
         <div className="ai-dashboard-title">

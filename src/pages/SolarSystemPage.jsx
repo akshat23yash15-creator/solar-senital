@@ -90,7 +90,7 @@ export default function SolarSystemPage() {
               {/* AI Prediction Panel */}
               <Motion.div
                 className="card glass neon-border"
-                style={{ padding: 16, overflowY: 'auto', height: '100%' }}
+                style={{ padding: 16, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}
                 initial={{ opacity: 0, x: 14 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1, type: 'spring', stiffness: 180, damping: 22 }}

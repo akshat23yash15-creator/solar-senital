@@ -309,48 +309,50 @@ function ImpactPath({ orbHex, etaLabel, loading = false }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — National Threat Status  (upgraded hero)
 // ─────────────────────────────────────────────────────────────────────────────
-function ThreatHero({ data, loading, error, onRefresh, ts }) {
-  // ── Exact field mappings as specified ────────────────────────────────────
-  // All paths support both the nested structure (live_telemetry / storm_metadata)
-  // and direct flat fields as a fallback, in case the API shape ever changes.
-  const kp           = data?.live_telemetry?.kp_index          ?? null
-  const windSpeed    = data?.live_telemetry?.speed              ?? null
-  const stormClass   = data?.storm_metadata?.storm_class        ?? null
-  const formattedEta = data?.storm_metadata?.formatted_eta      ?? null
-  const sevColor     = data?.storm_metadata?.severity_color     ?? null
-  const flareClass   = data?.flare_class                        ?? null
-  const riskLevel    = data?.risk_level                         ?? null
-  const confidence   = data?.confidence_score                   ?? null
+function ThreatHero({ data, infra, loading, error, onRefresh, ts }) {
+  // ── Field mapping ─────────────────────────────────────────────────────────
+  // live_telemetry (kp_index, speed) comes from infra: GET /api/v1/infrastructure/impact
+  // flare_class, risk_level, confidence_score come from data: POST /api/v1/ai/predict-live
+  // storm_metadata (storm_class, formatted_eta, severity_color) comes from infra
+  const kp           = infra?.live_telemetry?.kp_index          ?? null
+  const windSpeed    = infra?.live_telemetry?.speed              ?? null
+  const stormClass   = infra?.storm_metadata?.storm_class        ?? data?.storm_metadata?.storm_class ?? null
+  const formattedEta = infra?.storm_metadata?.formatted_eta      ?? data?.storm_metadata?.formatted_eta ?? null
+  const sevColor     = infra?.storm_metadata?.severity_color     ?? data?.storm_metadata?.severity_color ?? null
+  const flareClass   = data?.flare_class                         ?? null
+  const riskLevel    = data?.risk_level                          ?? null
+  const confidence   = data?.confidence_score                    ?? null
+
+  // Consider the hero "loaded" when either source has arrived
+  const anyData = data != null || infra != null
 
   const palette = threatPalette(riskLevel, kp)
-  // severity_color from the backend takes precedence over our derived palette
   const orbHex  = sevColor || palette.hex
   const pct     = confidence != null ? Math.min(100, Math.max(0, confidence)) : null
 
-  // Each stat: value=null means "loading", value=undefined means "error / no data"
-  // We derive a display string only when data is present
+  // value=null → skeleton (still loading), value=string → show it
   const statDefs = [
     {
       label: 'Kp Index',
-      value: data != null ? (kp != null ? String(kp) : 'N/A') : null,
+      value: anyData ? (kp != null ? String(kp) : 'N/A') : null,
       unit: 'geomagnetic',
       color: orbHex,
     },
     {
       label: 'Solar Wind',
-      value: data != null ? (windSpeed != null ? String(windSpeed) : 'N/A') : null,
+      value: anyData ? (windSpeed != null ? `${windSpeed} km/s` : 'N/A') : null,
       unit: 'km / s',
       color: 'var(--neonC)',
     },
     {
       label: 'Storm Class',
-      value: data != null ? (stormClass || 'NOMINAL') : null,
+      value: anyData ? (stormClass || 'NOMINAL') : null,
       unit: 'classification',
       color: orbHex,
     },
     {
       label: 'Flare Class',
-      value: data != null ? (flareClass || 'None') : null,
+      value: anyData ? (flareClass || 'None') : null,
       unit: 'x-ray burst',
       color: '#ffbf1f',
     },
@@ -364,10 +366,10 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
       transition={{ type: 'spring', stiffness: 140, damping: 20 }}
       style={{
         gridColumn: 'span 12',
-        boxShadow: data
+        boxShadow: anyData
           ? `0 0 60px ${orbHex}1a, 0 0 120px ${orbHex}0b, var(--shadow-md)`
           : 'var(--shadow-md)',
-        border: `1px solid ${data ? orbHex + '44' : 'var(--stroke)'}`,
+        border: `1px solid ${anyData ? orbHex + '44' : 'var(--stroke)'}`,
       }}
     >
       <div className="etc-hero-scanline" />
@@ -382,10 +384,10 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
             boxShadow: `0 0 32px ${orbHex}55, inset 0 0 18px ${orbHex}18`,
             color: orbHex,
           }}>
-            {loading && !data
+            {loading && !anyData
               ? <span className="etc-spinner" style={{ width: 28, height: 28 }} />
               : <span className="etc-status-orb-value">
-                  {kp != null ? kp : data ? 'N/A' : '?'}
+                  {kp != null ? kp : anyData ? 'N/A' : '?'}
                 </span>
             }
           </div>
@@ -397,24 +399,24 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
         <div className="etc-hero-meta">
           <div className="etc-hero-label">Solar Sentinel — Earth Threat Center</div>
           <div className="etc-hero-title" style={{ color: orbHex }}>
-            {loading && !data
+            {loading && !anyData
               ? 'Scanning...'
-              : error && !data
+              : error && !anyData
               ? 'Connection Error'
               : palette.label + ' THREAT LEVEL'
             }
           </div>
           <div className="etc-hero-sub">
-            {loading && !data
-              ? 'Contacting NASA SOHO endpoint...'
-              : error && !data
+            {loading && !anyData
+              ? 'Contacting telemetry endpoints...'
+              : error && !anyData
               ? error
               : stormClass && stormClass !== 'NOMINAL'
               ? `Storm Class: ${stormClass}`
               : 'Monitoring space weather conditions'
             }
           </div>
-          {data && (
+          {anyData && (
             <span className="etc-hero-badge" style={{
               background: `${orbHex}1a`, border: `1px solid ${orbHex}55`, color: orbHex,
             }}>
@@ -432,8 +434,8 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
         </div>
       </div>
 
-      {/* Impact path — show placeholder path even while loading so layout doesn't jump */}
-      <ImpactPath orbHex={orbHex} etaLabel={formattedEta} loading={loading && !data} />
+      {/* Impact path — always render so layout doesn't jump */}
+      <ImpactPath orbHex={orbHex} etaLabel={formattedEta} loading={loading && !anyData} />
 
       {/* ── Stat cards — ALWAYS rendered; skeletons while loading ── */}
       <div className="etc-hero-stats">
@@ -453,7 +455,7 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
         ))}
 
         {/* Confidence bar — skeleton while loading */}
-        {(loading && !data)
+        {(loading && !anyData)
           ? (
             <div className="etc-hero-stat" style={{ gridColumn: 'span 2', borderColor: 'rgba(34,211,238,0.1)' }}>
               <div className="etc-hero-stat-label">AI Confidence</div>
@@ -491,8 +493,8 @@ function ThreatHero({ data, loading, error, onRefresh, ts }) {
         }
       </div>
 
-      {/* Error bar — shown below stats only when there's a persistent failure */}
-      {error && !data && !loading && <ErrorBar text={`Scan failed: ${error}`} />}
+      {/* Error bar — shown only when both sources have failed */}
+      {error && !anyData && !loading && <ErrorBar text={`Scan failed: ${error}`} />}
     </Motion.div>
   )
 }
@@ -1084,7 +1086,7 @@ export default function AnalyticsPage() {
 
             <section className="grid">
               <ThreatHero
-                data={threat} loading={threatLoading}
+                data={threat} infra={infra} loading={threatLoading}
                 error={threatError} onRefresh={handleRefreshAll} ts={threatTs}
               />
               <GridDefenceMap

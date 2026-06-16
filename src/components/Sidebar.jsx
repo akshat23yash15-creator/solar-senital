@@ -19,10 +19,6 @@ export default function Sidebar() {
           <div className="brandTitle">SolarSentinel</div>
           <div className="brandTag">Space Weather Intelligence</div>
         </div>
-        <div className="pill" title="Build: demo">
-          <span className="pill-dot" style={{ background: 'var(--neonC)' }} />
-          demo
-        </div>
       </div>
 
       <nav className="nav">
@@ -39,13 +35,6 @@ export default function Sidebar() {
       </nav>
 
       <div style={{ marginTop: 'auto' }} className="glass" />
-      <div className="subtle" style={{ fontSize: 12 }}>
-        Tip: drag globe • scroll zoom
-        <span className="kbd" style={{ marginLeft: 8 }}>
-          Shift
-        </span>{' '}
-        + drag = faster
-      </div>
     </aside>
   )
 }

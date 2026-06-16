@@ -58,7 +58,7 @@ export default function HomePage() {
                     Enter Dashboard
                   </Link>
                   <Link className="btn" to="/analytics">
-                    View Analytics
+                    Earth Threat Center
                   </Link>
                   <span className="pill" style={{ marginLeft: 4 }}>
                     <span className="pill-dot" style={{ background: 'var(--neonC)' }} />
@@ -85,8 +85,8 @@ export default function HomePage() {
                   <Link className="btn" to="/satellites">
                     Satellite Risk
                   </Link>
-                  <Link className="btn" to="/grid-risk">
-                    Grid Risk
+                  <Link className="btn" to="/grid-heatmap">
+                    Heatmap
                   </Link>
                 </div>
 

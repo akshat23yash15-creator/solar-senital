@@ -141,7 +141,7 @@ function StatCard({ label, value, accent, delay = 0, large = false }) {
         {label}
       </span>
       <span style={{
-        fontSize: large ? 36 : 26, fontWeight: 750,
+        fontSize: large ? 30 : 22, fontWeight: 750,
         fontFamily: 'var(--mono)', color: accent || 'var(--text)',
         lineHeight: 1.1, wordBreak: 'break-word',
       }}>
@@ -175,7 +175,7 @@ function CountdownCard({ label, etaSeconds, accent, delay = 0 }) {
       <span style={{ fontSize: 11, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--muted)' }}>
         {label}
       </span>
-      <span style={{ fontSize: 36, fontWeight: 750, fontFamily: 'var(--mono)', color: accent || 'var(--text)', lineHeight: 1.1 }}>
+      <span style={{ fontSize: 30, fontWeight: 750, fontFamily: 'var(--mono)', color: accent || 'var(--text)', lineHeight: 1.1 }}>
         {fmtCountdown(remaining)}
       </span>
       <span style={{ fontSize: 12, color: 'var(--muted)' }}>live countdown</span>
@@ -257,7 +257,7 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
           width: 48, height: 48, borderRadius: '50%',
           background: `${bannerColor}22`, border: `2px solid ${bannerColor}88`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, flexShrink: 0,
+          flexShrink: 0,
           boxShadow: `0 0 20px ${bannerColor}44`,
           animation: isSevere ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
         }}>
@@ -327,7 +327,7 @@ function ThreatMeter({ kpIndex }) {
           return (
             <Motion.div
               key={t.label}
-              animate={{ opacity: isActive ? 1 : isPast ? 0.55 : 0.22, scale: isActive ? 1.02 : 1 }}
+              animate={{ opacity: isActive ? 1 : isPast ? 0.75 : 0.52, scale: isActive ? 1.02 : 1 }}
               transition={{ duration: 0.4 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -360,7 +360,7 @@ function ThreatMeter({ kpIndex }) {
               <div style={{
                 fontSize: 10, fontWeight: 750, fontFamily: 'var(--mono)',
                 letterSpacing: '1.5px', minWidth: 64, textAlign: 'right',
-                color: isActive ? t.color : isPast ? `${t.color}99` : 'rgba(255,255,255,0.25)',
+                color: isActive ? t.color : isPast ? `${t.color}cc` : 'rgba(255,255,255,0.55)',
               }}>
                 {t.label}
               </div>
@@ -396,7 +396,7 @@ function DefconCard({ kpIndex, stormClass, mode }) {
           return (
             <Motion.div
               key={lvl}
-              animate={{ opacity: isActive ? 1 : 0.2, scale: isActive ? 1.02 : 1 }}
+              animate={{ opacity: isActive ? 1 : 0.5, scale: isActive ? 1.02 : 1 }}
               transition={{ duration: 0.35 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -412,14 +412,14 @@ function DefconCard({ kpIndex, stormClass, mode }) {
                 background: isActive ? meta.color : 'rgba(255,255,255,0.06)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--mono)', fontWeight: 750, fontSize: 14,
-                color: isActive ? '#000' : 'rgba(255,255,255,0.2)',
+                color: isActive ? '#000' : 'rgba(255,255,255,0.55)',
                 boxShadow: isActive ? `0 0 14px ${meta.color}88` : 'none',
                 animation: isActive && lvl <= 2 ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
               }}>
                 {lvl}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)', letterSpacing: '0.8px', color: isActive ? meta.color : 'rgba(255,255,255,0.3)' }}>
+                <div style={{ fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)', letterSpacing: '0.8px', color: isActive ? meta.color : 'rgba(255,255,255,0.65)' }}>
                   {meta.label}
                 </div>
                 {isActive && (
@@ -981,12 +981,12 @@ export default function MagStormDashboardPage() {
                 </div>
 
                 {/* ══ EXISTING KPI CARDS ══ */}
-                <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+                <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
                   <StatCard label="Pipeline Status"  value={pipelineStatus} accent={pipelineColor(pipelineStatus)} delay={0} />
                   <StatCard label="Simulation State" value={simActive}       accent="var(--neonC)"                  delay={0.04} />
                   <StatCard label="Solar Wind Speed" value={windSpeed}       accent="var(--neonB)"                  delay={0.08} />
                   <StatCard label="Kp Index"         value={kpIndex}         accent={kpColor(kpIndex)}              delay={0.12} />
-                  <StatCard label="Storm Class"      value={stormClass}      accent={stormColorFn(stormClass)}      delay={0.16} large />
+                  <StatCard label="Storm Class"      value={stormClass}      accent={stormColorFn(stormClass)}      delay={0.16} />
                   <CountdownCard label="Impact ETA"  etaSeconds={etaSeconds} accent={accent}                        delay={0.20} />
                 </section>
 

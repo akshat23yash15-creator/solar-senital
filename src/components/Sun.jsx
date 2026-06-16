@@ -67,14 +67,14 @@ function Sun({ radius = 4, predictionState = null }) {
     if (risk === 'MEDIUM') {
       return {
         emissiveColor: new THREE.Color('#ff8800'),
-        emissiveIntensity: 4.5,
+        emissiveIntensity: 3.8,
         coronaColor: new THREE.Color('#ffaa44'),
-        coronaBaseOpacity: 0.33,
-        coronaPulseAmp: 0.07,
-        coronaPulseSpeed: 1.2,
-        rotationSpeed: 0.048,
+        coronaBaseOpacity: 0.30,
+        coronaPulseAmp: 0.05,
+        coronaPulseSpeed: 1.0,
+        rotationSpeed: 0.046,
         pointLightColor: '#ffaa33',
-        pointLightIntensity: 130,
+        pointLightIntensity: 115,
         showHotspot: false,
       }
     }
