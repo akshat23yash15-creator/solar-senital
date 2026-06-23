@@ -10,6 +10,8 @@ import Sidebar from '../components/Sidebar'
 import { useMagStormMode } from '../context/MagStormContext'
 import MagStormLoader from '../components/MagStormLoader'
 
+const API_URL = "https://solar-sentinel-v2.onrender.com";
+
 /* Tiny inline SVG helpers — no emoji, no extra deps */
 function LiveDot({ active }) {
   return (
@@ -855,7 +857,10 @@ export default function MagStormDashboardPage() {
     setError('')
     try {
       console.log("api hit")
-      const res = await axios.get(`/api/v1/infrastructure/impact?mode=${currentMode}`, { signal })
+     const res = await axios.get(
+  `${API_URL}/api/v1/infrastructure/impact?mode=${currentMode}`,
+  { signal }
+)
       console.log("FULL RESPONSE:", res.data)
       console.log("AVIATION ALERTS:", res.data.aviation_alerts)
       setData(res.data)
