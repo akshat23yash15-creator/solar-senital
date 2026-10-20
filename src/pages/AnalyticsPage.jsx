@@ -9,7 +9,7 @@
 
 import React, {
   useCallback, useEffect, useRef, useState
-} from 'react'
+} from 'react' 
 import axios from 'axios'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { motion as Motion, AnimatePresence } from 'framer-motion'
@@ -35,10 +35,7 @@ const API_V2 = 'https://solar-sentinel-v2.onrender.com'
 const API_V1 = 'https://solar-sentinel-1.onrender.com'
 const REFRESH_MS = 60_000
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dev-mode response logger — logs full API payloads so field mappings can be
-// verified without any production side-effects.
-// ─────────────────────────────────────────────────────────────────────────────
+
 const IS_DEV = import.meta.env.DEV
 
 function logApiResponse(label, data) {
