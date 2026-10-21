@@ -1,113 +1,102 @@
-# SolarSentinel — Real-Time Space Weather Intelligence (Demo)
+# SolarSentinel — Real-Time Space Weather Intelligence
 
-SolarSentinel is a production-style **multi-page React dashboard** for monitoring **space weather**, **satellite risk**, and **grid impact** using **hardcoded demo telemetry** (no external APIs).
+SolarSentinel is a high-performance, neon-cyberpunk **multi-page React command center** for monitoring **live solar events**, **orbital satellite risk**, and **terrestrial geomagnetic grid & aviation impact**, powered by live neural prediction and space weather APIs.
 
-It focuses on:
-- A futuristic **UI/UX (glassmorphism + neon)** using plain CSS (no Tailwind)
-- **3D visualization**: procedural Three.js Earth + orbiting/clickable satellites + orbit paths
-- **Analytics & charts**: Chart.js (line/bar/pie)
-- **Geospatial risk view**: Leaflet map with heat-style overlays
-- **Smooth motion**: Framer Motion page transitions
+---
 
-> Data is intentionally static/dummy for hackathon/demo use.
+## Live Data Flow & API Architecture
+
+SolarSentinel integrates live telemetry across three real-time cloud backend services:
+
+### 1. Solar Flare AI Prediction Service
+- **Live Flare Prediction**: `POST https://solar-sentinel-v3.onrender.com/api/v1/ai/predict-live`
+  - Ingests real-time NASA SOHO solar flux irradiance.
+  - Returns `flare_class`, `risk_level`, `confidence_score`, `predicted_log_flux`, `real_space_flux`, and `anomaly_localization` (`region_name`, `quadrant`, `x_coordinate_percent`, `y_coordinate_percent`).
+- **Manual Image Flare Prediction**: `POST https://solar-sentinel-v3.onrender.com/api/v1/ai/flare-prediction`
+  - Allows uploading optical coronal images to run neural network flare classification and anomaly localization.
+
+### 2. Terrestrial Infrastructure & Aviation Service
+- **Endpoint**: `GET https://solar-sentinel-v2.onrender.com/api/v1/infrastructure/impact?mode=live`
+  - **Live Telemetry**: Real solar wind velocity (`live_telemetry.speed`) and planetary Kp index (`live_telemetry.kp_index`).
+  - **Storm Metadata**: Geomagnetic storm class (`storm_class`), severity color (`severity_color`), and estimated time of arrival (`formatted_eta`).
+  - **Grid Heatmap Triggers**: Regional electrical grid matrices with induced risk values (`grid_heatmap_triggers`: `region`, `alert_level`, `value`, `lat`, `lng`).
+  - **Aviation Advisories**: High-latitude and polar flight route alerts with operational directives (`aviation_alerts`: `route_id`, `status`, `action`).
+  - **Automated Actions**: Automated grid mitigation and reactive load balancing procedures (`automated_actions`).
+
+### 3. HelioScar Satellite Risk Service
+- **Endpoint**: `GET https://solar-sentinel-1.onrender.com/api/helio-risk`
+  - **Constellation Telemetry**: Fleet of verified orbital assets with Norad tracking coordinates (`all_satellites` and `curated_top_10`).
+  - **Fields**: Satellite name, orbit type (LEO/MEO/GEO), altitude (`alt`), real coordinates (`lat`, `lng`), radiation dosage risk score (`risk_score`), operational status (`status`), and shielding directives (`recommendation`).
+  - **Metadata**: Global alert level and coronal X-ray flux levels.
+
+---
+
+## Key Modules & Pages
+
+### 1. Solar Flare Impact Center (`/flare-impact`)
+- Cross-domain command dashboard correlating all three live APIs.
+- Displays core prediction metrics (`flare_class`, `risk_level`, `confidence_score`, `predicted_log_flux`, `real_space_flux`).
+- Visualizes solar anomaly coordinates on a dedicated Solar Disk Coordinate Matrix with clear distinction that solar percentage coordinates are not Earth coordinates.
+- Interactive OpenStreetMap (React Leaflet) for grid heatmap triggers, with click-to-fly synchronization between ranked cards and map pins (no API key required).
+- Aviation corridor status monitoring and satellite risk directives.
+
+### 2. HelioScar Satellite Risk (`/satellites`)
+- Curated Top 10 vs. All Satellites (1,000 assets) live toggle.
+- Filter by risk level (`ALL`, `HIGH`, `MEDIUM`, `LOW`).
+- Live search by satellite name, orbit, or shielding recommendation.
+- Dynamic Chart.js risk profile visualization.
+
+### 3. Globe Risk View (`/globe-risk`)
+- Interactive Three.js 3D Earth rendering verified satellites from `/api/helio-risk` using real latitude, longitude, and altitude.
+- No generated or fake random satellites; only satellites with API coordinates are plotted.
+- Illustrative orbital rings passing through satellite positions with clear labeling that telemetry does not include TLE orbital elements.
+- Filter by `ALL`, `HIGH`, `MEDIUM`, and `LOW` risk tiers. Click-to-inspect satellite details.
+
+### 4. Operations Dashboard (`/dashboard`)
+- Real-time stat cards streaming solar wind speed, Kp index, flare class, and active corridor alert counts from live APIs.
+- Integrated AI Prediction Panel with live scan button and image dropzone.
+- Live satellite risk leaderboard and active aviation route table.
+
+### 5. Grid Risk (`/grid-risk` & `/grid-heatmap`)
+- Regional geomagnetic induction overlays mapped onto OpenStreetMap tiles.
+- Geomagnetic storm ETA and suggested operational mitigation procedures.
+
+### 6. Home Command View (`/`)
+- Rotating Three.js Earth with real-time solar wind, Kp index, flare classification, and storm ETA streaming through `TelemetryContext`.
 
 ---
 
 ## Tech Stack
 
-- **Vite + React** (functional components + hooks)
+- **Framework**: React 19 + Vite 8
 - **Routing**: `react-router-dom`
 - **Animations**: `framer-motion`
-- **3D globe**: `three`
+- **3D Graphics**: `three` + `@react-three/fiber`
 - **Charts**: `chart.js` + `react-chartjs-2`
-- **Map**: `leaflet` + `react-leaflet`
-- **Styling**: plain CSS (`src/styles/*.css`)
-
----
-
-## Features (What the app does)
-
-### Home (3D Earth Command View)
-- Procedural **3D Earth** (no texture image assets)
-- Subtle atmospheric glow + starfield background
-- **Orbiting satellites** (colored by risk)
-- **Orbit paths** (one orbit ring per satellite)
-- **Click a satellite** to open a details panel (hardcoded metadata)
-- Drag to rotate, scroll to zoom
-
-### Dashboard
-- High-level situation overview
-- Quick alerts + recommended actions
-
-### Satellite Risk
-- Sortable table of satellites and risk
-- Bar chart for risk distribution
-
-### Grid Risk
-- Leaflet global map
-- Heat-style risk overlay using circles (no external heatmap plugin)
-
-### Analytics
-- Multiple charts (line/bar/pie) using Chart.js
-
----
-
-## Project Structure
-
-```text
-public/
-  favicon.svg
-  icons.svg
-src/
-  main.jsx                 # App bootstrapping
-  App.jsx                  # Router + layout shell
-  App.js                   # Non-JSX re-export wrapper for App.jsx
-  components/
-    EarthScene.jsx         # Three.js globe + satellites + orbit paths
-    SatelliteDetails.jsx   # Clicked satellite details panel
-    Charts.jsx             # Chart.js wrappers + styling
-    GridRiskMap.jsx        # Leaflet map + heat-style circles
-    Sidebar.jsx            # Left navigation
-    Topbar.jsx             # Status pills
-    RiskBadge.jsx          # Risk pill component
-    PageTransition.jsx     # Framer Motion route transitions
-  pages/
-    HomePage.jsx
-    DashboardPage.jsx
-    SatelliteRiskPage.jsx
-    GridRiskPage.jsx
-    AnalyticsPage.jsx
-  styles/
-    theme.css              # tokens (colors, glass, shadows)
-    layout.css             # app shell layout
-    home.css               # home-specific
-    charts.css             # chart wrappers
-    map.css                # map wrappers
-  utils/
-    dummyData.js           # all demo telemetry data
-    risk.js                # risk helpers (CSS + Three color mapping)
-    motion.js              # motion presets
-```
+- **Mapping**: `leaflet` + `react-leaflet` using OpenStreetMap tiles (no API keys required)
+- **HTTP Client**: `axios`
+- **Icons**: `lucide-react`
+- **Styling**: Vanilla CSS tokens (`src/styles/*.css`)
 
 ---
 
 ## Setup & Run
 
 ### Prerequisites
-- Node.js 18+ recommended
+- Node.js 18+ (tested on Node 20+)
 
-### Install
+### Install Dependencies
 ```bash
 npm install
 ```
 
-### Development
+### Start Development Server
 ```bash
 npm run dev
 ```
-Then open: `http://localhost:5173/`
+Open your browser at: `http://localhost:5173/`
 
-### Production Build
+### Build for Production
 ```bash
 npm run build
 ```
@@ -116,88 +105,3 @@ npm run build
 ```bash
 npm run preview
 ```
-
----
-
-## Workflow / How the app works
-
-### 1) App bootstrap
-- `src/main.jsx` mounts React and the router.
-
-### 2) Routing + layout
-- `src/App.jsx` defines routes:
-  - `/` Home
-  - `/dashboard`
-  - `/satellites`
-  - `/grid`
-  - `/analytics`
-- Pages are lazy-loaded and wrapped with Framer Motion transitions.
-
-### 3) Data flow (dummy-only)
-- `src/utils/dummyData.js` is the single source of truth for demo data.
-- Pages/components import it directly (no network layer).
-
-### 4) Risk display conventions
-- `src/utils/risk.js` provides:
-  - `riskLevelFromScore(score)` → `low | medium | high`
-  - `riskColor(level)` → CSS variable for UI
-  - `riskColorThree(level)` → **hex color** for Three.js materials
-
-### 5) 3D Earth workflow
-- `src/components/EarthScene.jsx`:
-  - Builds Three.js scene/camera/renderer
-  - Creates a procedural CanvasTexture for Earth color
-  - Adds atmosphere shader + stars
-  - Spawns satellite meshes and updates their positions each frame
-  - Creates orbit rings (one per satellite)
-  - Handles pointer drag + wheel zoom + click picking (raycaster)
-  - Cleans up all geometries/materials on unmount
-
-### 6) Charts workflow
-- `src/components/Charts.jsx` registers Chart.js elements once.
-- Each page passes series from `dummyData.js`.
-
-### 7) Map workflow
-- `src/components/GridRiskMap.jsx`:
-  - Renders a Leaflet map
-  - Adds Circle overlays with opacity to mimic a heatmap
-
----
-
-## Notes / Constraints
-
-- **No external APIs**: the dashboard uses demo telemetry only.
-- **No Tailwind**: all styling is plain CSS.
-- **No image textures for Earth**: Earth is procedural to keep assets out of the repo.
-
----
-
-## Troubleshooting
-
-### "Globe looks like a ring"
-- Atmosphere glow may be too intense. Adjust `intensity` in `EarthScene.jsx` shader uniforms.
-
-### Three.js color warnings
-- Ensure Three materials use `riskColorThree()` (hex), not CSS variables.
-
----
-
-## License
-
-MIT (or replace with your preferred license).
-s template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

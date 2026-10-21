@@ -8,6 +8,7 @@ const links = [
   { to: '/globe-risk', label: 'Globe Risk', hint: '3D' },
   { to: '/magstorm', label: 'MagStorm Shield', hint: 'Live' },
   { to: '/grid-heatmap', label: 'Grid Heatmap', hint: 'Map' },
+  { to: '/flare-impact', label: 'Flare Impact', hint: 'Center' },
   { to: '/analytics', label: 'Earth Threat Center', hint: 'Live' },
 ]
 

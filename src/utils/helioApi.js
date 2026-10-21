@@ -86,16 +86,22 @@ export function normalizeSatellite(raw, index = 0) {
     orbit: String(pickFirst(raw, ['orbit', 'orbit_type', 'orbitType', 'class'], 'LEO')),
     ageYears: toNumber(pickFirst(raw, ['ageYears', 'age_years', 'age']), 0),
     riskScore,
+    risk_score: riskScore,
     level,
     status: String(pickFirst(raw, ['status'], level === 'medium' ? 'Normal' : level)),
+    recommendation: String(pickFirst(raw, ['recommendation', 'rec', 'action', 'shielding_recommendation'], 'Nominal operations')),
     latitude: toNumber(pickFirst(raw, ['latitude', 'lat']), null),
     longitude: toNumber(pickFirst(raw, ['longitude', 'lon', 'lng']), null),
+    lat: toNumber(pickFirst(raw, ['latitude', 'lat']), null),
+    lng: toNumber(pickFirst(raw, ['longitude', 'lon', 'lng']), null),
     altitudeKm: toNumber(pickFirst(raw, ['altitudeKm', 'altitude_km', 'altitude', 'alt']), null),
+    alt: toNumber(pickFirst(raw, ['altitudeKm', 'altitude_km', 'altitude', 'alt']), null),
     inclinationDeg: toNumber(pickFirst(raw, ['inclinationDeg', 'inclination_deg', 'inclination']), null),
     velocityKms: toNumber(pickFirst(raw, ['velocityKms', 'velocity_kms', 'velocity']), null),
     country: pickFirst(raw, ['country', 'operator_country', 'owner_country'], null),
     operator: pickFirst(raw, ['operator', 'owner', 'agency'], null),
     lastUpdated: pickFirst(raw, ['lastUpdated', 'last_updated', 'timestamp', 'updatedAt'], null),
+    last_updated: pickFirst(raw, ['last_updated', 'lastUpdated', 'timestamp'], null),
     raw,
   }
 }
@@ -119,6 +125,16 @@ async function requestJson(path, params) {
 export async function fetchHelioRiskSatellites() {
   const payload = await requestJson('/api/helio-risk')
   return extractList(payload).map(normalizeSatellite)
+}
+
+export async function fetchFullHelioRisk(signal) {
+  const payload = await requestJson('/api/helio-risk')
+  return {
+    metadata: payload?.metadata || null,
+    curated_top_10: (payload?.curated_top_10 || []).map(normalizeSatellite),
+    all_satellites: (payload?.all_satellites || []).map(normalizeSatellite),
+    raw: payload,
+  }
 }
 
 export async function searchHelioSatellites(query) {

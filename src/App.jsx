@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { MagStormProvider } from './context/MagStormContext'
 import { SolarPredictionProvider } from './context/SolarPredictionContext'
+import { TelemetryProvider } from './context/TelemetryContext'
 
 import HomePage from './pages/HomePage'
 
@@ -14,6 +15,7 @@ const GlobeRiskPage = lazy(() => import('./pages/GlobeRiskPage'))
 const SolarSystemPage = lazy(() => import('./pages/SolarSystemPage'))
 const MagStormDashboardPage = lazy(() => import('./pages/MagStormDashboardPage'))
 const GridRiskMapPage = lazy(() => import('./pages/GridRiskMapPage'))
+const SolarFlareImpactPage = lazy(() => import('./pages/SolarFlareImpactPage'))
 
 function Loading() {
   return (
@@ -52,6 +54,7 @@ export default function App() {
 
       <SolarPredictionProvider>
       <MagStormProvider>
+      <TelemetryProvider>
       <Suspense fallback={<Loading />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -64,10 +67,13 @@ export default function App() {
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/magstorm" element={<MagStormDashboardPage />} />
             <Route path="/grid-heatmap" element={<GridRiskMapPage />} />
+            <Route path="/flare-impact" element={<SolarFlareImpactPage />} />
+            <Route path="/solar-flare-impact" element={<Navigate to="/flare-impact" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
       </Suspense>
+      </TelemetryProvider>
       </MagStormProvider>
       </SolarPredictionProvider>
     </div>

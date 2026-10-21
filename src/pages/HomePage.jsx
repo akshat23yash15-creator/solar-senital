@@ -4,7 +4,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import EarthScene from '../components/EarthScene'
 import PageTransition from '../components/PageTransition'
 import SatelliteDetails from '../components/SatelliteDetails'
-import { liveStats } from '../utils/dummyData'
+import { useTelemetry } from '../context/TelemetryContext'
 import '../styles/home.css'
 
 function Stat({ label, value }) {
@@ -18,22 +18,45 @@ function Stat({ label, value }) {
 
 export default function HomePage() {
   const [selectedSatellite, setSelectedSatellite] = useState(null)
+  const { solarWindSpeed, kpIndex, flareClass, stormEta, lastUpdated, loading, curatedTop10 } = useTelemetry()
 
   const stats = useMemo(
     () => [
-      { label: 'Solar Wind', value: `${liveStats.solarWindSpeed} km/s` },
-      { label: 'Kp Index', value: liveStats.kpIndex },
-      { label: 'Flare Class', value: liveStats.flareClass },
-      { label: 'Storm ETA', value: liveStats.geomagneticStormEta },
+      {
+        label: 'Solar Wind',
+        value: solarWindSpeed != null ? String(solarWindSpeed) : loading ? 'Syncing…' : 'Unavailable',
+      },
+      {
+        label: 'Kp Index',
+        value: kpIndex != null ? String(kpIndex) : loading ? 'Syncing…' : 'Unavailable',
+      },
+      {
+        label: 'Flare Class',
+        value: flareClass != null ? String(flareClass) : loading ? 'Syncing…' : 'Unavailable',
+      },
+      {
+        label: 'Storm ETA',
+        value: stormEta != null ? String(stormEta) : loading ? 'Syncing…' : 'Unavailable',
+      },
     ],
-    []
+    [solarWindSpeed, kpIndex, flareClass, stormEta, loading]
   )
+
+  const updatedDisplay = lastUpdated
+    ? new Date(lastUpdated).toUTCString().replace('GMT', 'UTC').slice(0, 25)
+    : loading
+    ? 'Connecting to live APIs…'
+    : 'Telemetry offline'
 
   return (
     <PageTransition>
       <div className="home">
         <div className="canvasWrap">
-          <EarthScene className="canvasWrap" onSelectSatellite={setSelectedSatellite} />
+          <EarthScene
+            className="canvasWrap"
+            satellites={curatedTop10}
+            onSelectSatellite={setSelectedSatellite}
+          />
         </div>
 
         <AnimatePresence>
@@ -50,22 +73,34 @@ export default function HomePage() {
               >
                 <h1 className="heroTitle">SolarSentinel — Real-Time Space Weather Intelligence</h1>
                 <p className="heroSub">
-                  A neon-grade, interactive command center for monitoring solar events, satellite risk, and geomagnetic grid impact.
-                  Built for visual impact: 3D Earth, charts, and a global risk map—powered by hardcoded demo telemetry.
+                  A neon-grade, interactive command center for monitoring solar flare events, satellite risk,
+                  and geomagnetic grid impact—powered by live telemetry from AI flare models, NOAA SWPC, and NORAD satellite networks.
                 </p>
                 <div className="heroActions">
                   <Link className="btn" to="/dashboard">
                     Enter Dashboard
                   </Link>
+                  <Link
+                    className="btn"
+                    to="/flare-impact"
+                    style={{ borderColor: 'rgba(34,211,238,0.5)', color: 'var(--neonC)' }}
+                  >
+                    Flare Impact Center
+                  </Link>
                   <Link className="btn" to="/analytics">
                     Earth Threat Center
                   </Link>
                   <span className="pill" style={{ marginLeft: 4 }}>
-                    <span className="pill-dot" style={{ background: 'var(--neonC)' }} />
-                    last updated: {liveStats.lastUpdated}
+                    <span
+                      className="pill-dot"
+                      style={{ background: loading ? 'var(--risk-med)' : 'var(--neonC)' }}
+                    />
+                    last updated: {updatedDisplay}
                   </span>
                 </div>
-                <div className="homeHint">Drag to rotate • Scroll to zoom • Red/Yellow/Green satellites indicate risk</div>
+                <div className="homeHint">
+                  Interactive 3D Earth • Live solar, grid, and orbital satellite telemetry
+                </div>
               </Motion.div>
 
               <Motion.aside
@@ -74,7 +109,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1, duration: 0.7, ease: 'easeOut' }}
               >
-                <h3 style={{ marginTop: 0 }}>Live Stats</h3>
+                <h3 style={{ marginTop: 0 }}>Live Telemetry</h3>
                 <div className="statGrid">
                   {stats.map((s) => (
                     <Stat key={s.label} label={s.label} value={s.value} />
@@ -91,7 +126,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="homeHint" style={{ marginTop: 14 }}>
-                  Scoring in this demo is static. In production, this would stream telemetry + space weather models.
+                  Streaming live telemetry from SolarSentinel neural flare prediction & geomagnetic infrastructure APIs.
                 </div>
               </Motion.aside>
             </div>

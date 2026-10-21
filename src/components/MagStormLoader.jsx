@@ -25,24 +25,24 @@ const PROGRESS_LABELS = [
 
 const STATUS_ITEMS = [
   { id: 'noaa',      label: 'NOAA CONNECTED',    sub: 'REAL-TIME FEED',         spin: false, delay: 0.5,  color: '#35f28c' },
-  { id: 'nasa',      label: 'NASA CONNECTED',     sub: 'GOES-19 SATELLITE',      spin: false, delay: 0.9,  color: '#35f28c' },
-  { id: 'telemetry', label: 'TELEMETRY ACTIVE',   sub: '4 MB/S · 22ms LATENCY', spin: false, delay: 1.3,  color: '#35f28c' },
-  { id: 'forecast',  label: 'COMPUTING FORECAST', sub: 'SOLAR-BERT v3.1 · 94%', spin: true,  delay: 1.7,  color: '#ffbf1f' },
+  { id: 'nasa',      label: 'NASA CONNECTED',     sub: 'GOES OBSERVATION',      spin: false, delay: 0.9,  color: '#35f28c' },
+  { id: 'telemetry', label: 'TELEMETRY ACTIVE',   sub: 'STREAMING PIPELINE',    spin: false, delay: 1.3,  color: '#35f28c' },
+  { id: 'forecast',  label: 'COMPUTING FORECAST', sub: 'NEURAL PREDICTION',     spin: true,  delay: 1.7,  color: '#ffbf1f' },
 ]
 
 const FEED_LINES = [
-  { text: '> HANDSHAKE GOES-19 SAT',     color: '#00e5ff',              delay: 0.4  },
-  { text: '  200 OK · RTT 18ms',         color: 'rgba(0,229,255,0.5)', delay: 0.65 },
+  { text: '> HANDSHAKE GOES SATELLITE',   color: '#00e5ff',              delay: 0.4  },
+  { text: '  CONNECTION ESTABLISHED',     color: 'rgba(0,229,255,0.5)', delay: 0.65 },
   { text: '> AUTH NOAA SWPC ENDPOINT',   color: '#00e5ff',              delay: 1.0  },
-  { text: '  TLS 1.3 TOKEN VERIFIED',    color: 'rgba(0,229,255,0.5)', delay: 1.2  },
+  { text: '  API SESSION VERIFIED',       color: 'rgba(0,229,255,0.5)', delay: 1.2  },
   { text: '> KP INDEX STREAM ACTIVE',    color: '#00e5ff',              delay: 1.6  },
-  { text: '  KP = 4.2  [ELEVATED]',      color: '#ffbf1f',              delay: 1.85 },
-  { text: '> DELHI NCR GRID SCAN',       color: '#00e5ff',              delay: 2.2  },
-  { text: '  RISK = 62/100 [ELEVATED]',  color: '#ffbf1f',              delay: 2.4  },
-  { text: '> NE GRID SECTOR SCAN',       color: '#00e5ff',              delay: 2.75 },
-  { text: '  RISK = 48/100 [NOMINAL]',   color: '#35f28c',              delay: 2.95 },
-  { text: '> ML FORECAST INIT',          color: '#00e5ff',              delay: 3.3  },
-  { text: '  ACCURACY: 94.2%',           color: '#35f28c',              delay: 3.65 },
+  { text: '  RECEIVING LIVE GEOMAGNETIC FEED', color: '#35f28c',        delay: 1.85 },
+  { text: '> REGIONAL GRID SCAN',        color: '#00e5ff',              delay: 2.2  },
+  { text: '  QUERYING HEATMAP TRIGGERS',  color: '#22d3ee',              delay: 2.4  },
+  { text: '> AVIATION CORRIDORS SYNC',   color: '#00e5ff',              delay: 2.75 },
+  { text: '  MONITORING POLAR ROUTES',   color: '#35f28c',              delay: 2.95 },
+  { text: '> AI MODEL INFERENCE',        color: '#00e5ff',              delay: 3.3  },
+  { text: '  SYNCHRONIZING TELEMETRY',   color: '#35f28c',              delay: 3.65 },
 ]
 
 /* ─────────────────────────────────────────────────────────────────────

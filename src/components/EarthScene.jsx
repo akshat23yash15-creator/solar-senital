@@ -1,27 +1,26 @@
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { satellites } from '../utils/dummyData'
 import { riskLevelFromScore, riskColorThree } from '../utils/risk'
 
-export default function EarthScene({ className }) {
+export default function EarthScene({ className, satellites = [] }) {
   const mountRef = useRef(null)
   const rafRef = useRef(0)
 
   const satMeta = useMemo(() => {
-    return satellites.map((s, idx) => {
-      const level = riskLevelFromScore(s.riskScore)
+    return (satellites || []).map((s, idx) => {
+      const score = Number(s.risk_score ?? s.riskScore) || 0
+      const level = s.level || riskLevelFromScore(score)
       return {
         ...s,
         level,
         color: new THREE.Color(riskColorThree(level)),
-        // Scaled orbit radius relative to the larger Earth
         radius: 3.2 + (idx % 3) * 0.25,
         speed: 0.1 + (idx % 4) * 0.03,
         inc: (idx * 25 * Math.PI) / 180,
         phase: idx * 1.5,
       }
     })
-  }, [])
+  }, [satellites])
 
   useEffect(() => {
     const mount = mountRef.current

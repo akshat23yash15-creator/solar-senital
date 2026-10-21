@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { liveStats } from '../utils/dummyData'
+import { useTelemetry } from '../context/TelemetryContext'
 
 function StatusPill({ label, value, color }) {
   return (
@@ -12,13 +12,40 @@ function StatusPill({ label, value, color }) {
 }
 
 export default function Topbar({ title, subtitle }) {
+  const { solarWindSpeed, kpIndex, stormClass, loading, infraData } = useTelemetry()
+
   const derived = useMemo(() => {
-    const storm = liveStats.kpIndex >= 6 ? 'Storm' : liveStats.kpIndex >= 4 ? 'Elevated' : 'Nominal'
+    const kpNum = Number(kpIndex)
+    const storm = stormClass
+      ? stormClass
+      : Number.isFinite(kpNum)
+      ? kpNum >= 6
+        ? 'Storm'
+        : kpNum >= 4
+        ? 'Elevated'
+        : 'Nominal'
+      : loading
+      ? 'Syncing…'
+      : 'Unavailable'
+
+    const speedNum = parseFloat(solarWindSpeed)
+    const link = infraData?.pipeline_status
+      ? infraData.pipeline_status
+      : Number.isFinite(speedNum)
+      ? speedNum >= 600
+        ? 'Degrading'
+        : 'Stable'
+      : loading
+      ? 'Syncing…'
+      : 'Offline'
+
     return {
       storm,
-      link: liveStats.solarWindSpeed >= 600 ? 'Degrading' : 'Stable',
+      link,
+      speedText: solarWindSpeed != null ? String(solarWindSpeed) : loading ? 'Syncing…' : 'Unavailable',
+      kpText: kpIndex != null ? String(kpIndex) : loading ? 'Syncing…' : 'Unavailable',
     }
-  }, [])
+  }, [solarWindSpeed, kpIndex, stormClass, loading, infraData])
 
   return (
     <header className="topbar glass neon-border">
@@ -28,13 +55,31 @@ export default function Topbar({ title, subtitle }) {
       </div>
 
       <div className="topbarRight">
-        <StatusPill label="Solar Wind" value={`${liveStats.solarWindSpeed} km/s`} color="var(--neonB)" />
-        <StatusPill label="Kp" value={liveStats.kpIndex} color="var(--neonA)" />
-        <StatusPill label="Ops" value={derived.link} color="var(--neonC)" />
+        <StatusPill
+          label="Solar Wind"
+          value={derived.speedText}
+          color="var(--neonB)"
+        />
+        <StatusPill
+          label="Kp"
+          value={derived.kpText}
+          color="var(--neonA)"
+        />
+        <StatusPill
+          label="Ops"
+          value={derived.link}
+          color="var(--neonC)"
+        />
         <StatusPill
           label="Storm"
           value={derived.storm}
-          color={derived.storm === 'Storm' ? 'var(--risk-high)' : derived.storm === 'Elevated' ? 'var(--risk-med)' : 'var(--risk-low)'}
+          color={
+            derived.storm === 'Storm' || derived.storm === 'CRITICAL'
+              ? 'var(--risk-high)'
+              : derived.storm === 'Elevated' || derived.storm === 'WARNING'
+              ? 'var(--risk-med)'
+              : 'var(--risk-low)'
+          }
         />
       </div>
     </header>
