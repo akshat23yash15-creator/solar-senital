@@ -11,11 +11,50 @@ export default function SolarDiskViewer({ anomalyLocalization, riskLevel, flareC
   const rawY = anomalyLocalization?.y_coordinate_percent
 
   const hasCoords = rawX !== undefined && rawY !== undefined && rawX !== null && rawY !== null
-  const xPercent = hasCoords ? Math.min(100, Math.max(0, Number(rawX))) : 50
-  const yPercent = hasCoords ? Math.min(100, Math.max(0, Number(rawY))) : 50
+  const numX = hasCoords ? Number(rawX) : null
+  const numY = hasCoords ? Number(rawY) : null
 
-  const isActiveAnomaly = hasCoords && (xPercent > 0 || yPercent > 0) && quadrant !== 'None'
   const activeQuadKey = typeof quadrant === 'string' ? quadrant.trim().toUpperCase() : 'NONE'
+  const isQuadValid = ['NW', 'NE', 'SW', 'SE'].includes(activeQuadKey)
+  const isNamedAnomaly = regionName && regionName !== 'Stable Matrix' && regionName !== 'None'
+  const isClassAlert = (flareClass && flareClass !== 'Quiet' && flareClass !== 'Nominal' && flareClass !== '—') ||
+                       (riskLevel && riskLevel.toUpperCase() !== 'LOW')
+
+  const isActiveAnomaly = isNamedAnomaly || isQuadValid || isClassAlert || (hasCoords && ((numX ?? 0) > 0 || (numY ?? 0) > 0))
+
+  // Quadrant geometric centers (well clear of borders and corner tags)
+  const QUADRANT_CENTERS = {
+    NW: { x: 28, y: 28 },
+    NE: { x: 72, y: 28 },
+    SW: { x: 28, y: 72 },
+    SE: { x: 72, y: 72 },
+  }
+
+  // Determine display coordinates:
+  // If coordinates are explicitly given and not (0,0), clamp them inside [16%, 84%]
+  // If coordinates are (0,0) or missing but a quadrant is known, use the quadrant center
+  let targetX = 50
+  let targetY = 50
+
+  if (hasCoords && (numX > 0 || numY > 0)) {
+    targetX = numX
+    targetY = numY
+  } else if (isQuadValid && QUADRANT_CENTERS[activeQuadKey]) {
+    targetX = QUADRANT_CENTERS[activeQuadKey].x
+    targetY = QUADRANT_CENTERS[activeQuadKey].y
+  } else if (hasCoords) {
+    // Both are 0 and no known quadrant
+    targetX = 50
+    targetY = 50
+  }
+
+  // Clamp within solar disk container so reticle (38px + ping) is 100% inside the viewport
+  const displayX = Math.min(84, Math.max(16, targetX))
+  const displayY = Math.min(84, Math.max(16, targetY))
+
+  // Dynamic tooltip alignment so it never clips off-screen
+  const tooltipAbove = displayY >= 36
+  const tooltipAlign = displayX < 32 ? 'left' : displayX > 68 ? 'right' : 'center'
 
   return (
     <div className="sfi-solar-layout">
@@ -121,12 +160,12 @@ export default function SolarDiskViewer({ anomalyLocalization, riskLevel, flareC
           </div>
 
           {/* Anomaly coordinate reticle marker */}
-          {hasCoords && (
+          {(isActiveAnomaly || hasCoords) && (
             <div
               className="sfi-anomaly-reticle"
               style={{
-                left: `${xPercent}%`,
-                top: `${yPercent}%`,
+                left: `${displayX}%`,
+                top: `${displayY}%`,
               }}
               onClick={() => setShowTooltip((s) => !s)}
             >
@@ -134,7 +173,7 @@ export default function SolarDiskViewer({ anomalyLocalization, riskLevel, flareC
                 className="sfi-reticle-ring"
                 style={{
                   borderColor: isActiveAnomaly ? '#ff3b3b' : 'var(--neonC)',
-                  boxShadow: isActiveAnomaly ? '0 0 14px #ff3b3b' : '0 0 14px var(--neonC)',
+                  boxShadow: isActiveAnomaly ? '0 0 16px #ff3b3b' : '0 0 14px var(--neonC)',
                 }}
               />
               {isActiveAnomaly && <div className="sfi-reticle-ping" />}
@@ -142,24 +181,38 @@ export default function SolarDiskViewer({ anomalyLocalization, riskLevel, flareC
                 className="sfi-reticle-center"
                 style={{
                   background: isActiveAnomaly ? '#ff3b3b' : 'var(--neonC)',
-                  boxShadow: isActiveAnomaly ? '0 0 10px #ff3b3b' : '0 0 8px var(--neonC)',
+                  boxShadow: isActiveAnomaly ? '0 0 12px #ff3b3b' : '0 0 8px var(--neonC)',
                 }}
               />
 
               <AnimatePresence>
                 {showTooltip && (
                   <Motion.div
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     className="sfi-reticle-tooltip"
                     style={{
                       borderColor: isActiveAnomaly ? '#ff3b3b' : 'var(--neonC)',
+                      boxShadow: isActiveAnomaly ? '0 4px 20px rgba(255, 59, 59, 0.4)' : '0 4px 18px rgba(34, 211, 238, 0.3)',
+                      ...(tooltipAbove
+                        ? { bottom: 'calc(100% + 10px)', top: 'auto' }
+                        : { top: 'calc(100% + 10px)', bottom: 'auto' }),
+                      ...(tooltipAlign === 'left'
+                        ? { left: 0, transform: 'none' }
+                        : tooltipAlign === 'right'
+                        ? { right: 0, left: 'auto', transform: 'none' }
+                        : { left: '50%', transform: 'translateX(-50%)' }),
                     }}
                   >
                     <strong>{regionName}</strong>
-                    <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
-                      X: {xPercent}% · Y: {yPercent}% ({quadrant})
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+                      {hasCoords && (numX > 0 || numY > 0)
+                        ? `X: ${numX}% · Y: ${numY}%`
+                        : isQuadValid
+                        ? `Quadrant: ${quadrant}`
+                        : `Coords: ${displayX}% / ${displayY}%`}
+                      {quadrant && quadrant !== 'None' && ` (${quadrant})`}
                     </div>
                   </Motion.div>
                 )}
@@ -264,7 +317,8 @@ export default function SolarDiskViewer({ anomalyLocalization, riskLevel, flareC
               <>
                 Neural prediction identifies magnetic energy elevation in{' '}
                 <strong style={{ color: '#fff' }}>{regionName}</strong> in quadrant{' '}
-                <strong style={{ color: '#fff' }}>{quadrant}</strong> at ({xPercent}%, {yPercent}%).
+                <strong style={{ color: '#fff' }}>{quadrant}</strong>
+                {hasCoords && (numX > 0 || numY > 0) ? ` at (${numX}%, ${numY}%)` : ''}.
               </>
             ) : (
               <>

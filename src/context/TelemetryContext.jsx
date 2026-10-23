@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import axios from 'axios'
 import { fetchLivePrediction, fetchInfrastructureImpact } from '../utils/solarPredictionApi'
 import { fetchFullHelioRisk } from '../utils/helioApi'
 

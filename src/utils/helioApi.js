@@ -127,7 +127,7 @@ export async function fetchHelioRiskSatellites() {
   return extractList(payload).map(normalizeSatellite)
 }
 
-export async function fetchFullHelioRisk(signal) {
+export async function fetchFullHelioRisk() {
   const payload = await requestJson('/api/helio-risk')
   return {
     metadata: payload?.metadata || null,

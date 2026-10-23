@@ -530,8 +530,31 @@
   gap: 10px;
   max-height: 520px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(10, 12, 26, 0.6);
 }
+
+.sfi-ranked-list-wrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sfi-ranked-list-wrap::-webkit-scrollbar-track {
+  background: rgba(10, 12, 26, 0.6);
+  border-radius: 999px;
+}
+
+.sfi-ranked-list-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.sfi-ranked-list-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.55);
+}
+
 
 .sfi-ranked-card {
   padding: 12px 14px;

@@ -33,31 +33,31 @@ function SimIcon() {
 
 
 function pipelineColor(s) {
-  if (!s) return 'var(--muted)'
+  if (!s) return '#94a3b8'
   const v = String(s).toUpperCase()
-  if (v === 'HEALTHY' || v === 'NOMINAL') return 'var(--risk-low)'
-  if (v === 'DEGRADED' || v === 'WARNING') return 'var(--risk-med)'
-  return 'var(--risk-high)'
+  if (v === 'HEALTHY' || v === 'NOMINAL') return '#38ef7d'
+  if (v === 'DEGRADED' || v === 'WARNING') return '#ffbf1f'
+  return '#ff5c8a'
 }
 function kpColor(kp) {
-  if (kp == null) return 'var(--muted)'
-  if (kp >= 7) return 'var(--risk-high)'
-  if (kp >= 4) return 'var(--risk-med)'
-  return 'var(--risk-low)'
+  if (kp == null) return '#94a3b8'
+  if (kp >= 7) return '#ff5c8a'
+  if (kp >= 4) return '#ffbf1f'
+  return '#38ef7d'
 }
 function stormColorFn(cls) {
-  if (!cls) return 'var(--muted)'
+  if (!cls) return '#94a3b8'
   const c = String(cls).toUpperCase()
-  if (c === 'NOMINAL' || c === 'G1') return 'var(--risk-low)'
-  if (c === 'G2' || c === 'G3' || c === 'M') return 'var(--risk-med)'
-  return 'var(--risk-high)'
+  if (c === 'NOMINAL' || c === 'G1') return '#38ef7d'
+  if (c === 'G2' || c === 'G3' || c === 'M') return '#ffbf1f'
+  return '#ff5c8a'
 }
 function aviationStatusColor(s) {
-  if (!s) return 'var(--muted)'
+  if (!s) return '#94a3b8'
   const v = String(s).toUpperCase()
-  if (v === 'NOMINAL') return 'var(--risk-low)'
-  if (v === 'WARNING') return 'var(--risk-med)'
-  return 'var(--risk-high)'
+  if (v === 'NOMINAL') return '#38ef7d'
+  if (v === 'WARNING') return '#ffbf1f'
+  return '#ff5c8a'
 }
 function fmtTimestamp(ts) {
   if (!ts) return '—'
@@ -75,12 +75,12 @@ function fmtCountdown(sec) {
 
 /** Derive threat level from Kp index. Returns concrete hex colors (safe for CSS template literals). */
 function getThreatLevel(kp) {
-  if (kp == null) return { level: 'UNKNOWN', idx: -1, color: '#888888' }
-  if (kp >= 8)   return { level: 'CRITICAL', idx: 4, color: '#ff1744' }
-  if (kp >= 6)   return { level: 'SEVERE',   idx: 3, color: '#ff5722' }
+  if (kp == null) return { level: 'UNKNOWN', idx: -1, color: '#94a3b8' }
+  if (kp >= 8)   return { level: 'CRITICAL', idx: 4, color: '#ff5c8a' }
+  if (kp >= 6)   return { level: 'SEVERE',   idx: 3, color: '#ff7043' }
   if (kp >= 4)   return { level: 'HIGH',     idx: 2, color: '#ffbf1f' }
   if (kp >= 2)   return { level: 'ELEVATED', idx: 1, color: '#ffd740' }
-  return           { level: 'SAFE',     idx: 0, color: '#35f28c' }
+  return           { level: 'SAFE',     idx: 0, color: '#38ef7d' }
 }
 
 /** DEFCON level: 1 = CATASTROPHIC, 5 = SAFE */
@@ -96,19 +96,19 @@ function calcDefcon(kp, stormClass, isSim) {
 }
 
 const DEFCON_META = {
-  5: { label: 'SAFE',         color: '#35f28c', desc: 'Normal space weather conditions' },
+  5: { label: 'SAFE',         color: '#38ef7d', desc: 'Normal space weather conditions' },
   4: { label: 'ELEVATED',     color: '#ffd740', desc: 'Minor geomagnetic disturbance' },
   3: { label: 'MODERATE',     color: '#ffbf1f', desc: 'Significant storm activity' },
-  2: { label: 'SEVERE',       color: '#ff5722', desc: 'Major infrastructure impact' },
-  1: { label: 'CATASTROPHIC', color: '#ff1744', desc: 'Extreme event — all systems alert' },
+  2: { label: 'SEVERE',       color: '#ff7043', desc: 'Major infrastructure impact' },
+  1: { label: 'CATASTROPHIC', color: '#ff5c8a', desc: 'Extreme event — all systems alert' },
 }
 
 const THREAT_META = [
-  { label: 'SAFE',     color: '#35f28c' },
+  { label: 'SAFE',     color: '#38ef7d' },
   { label: 'ELEVATED', color: '#ffd740' },
   { label: 'HIGH',     color: '#ffbf1f' },
-  { label: 'SEVERE',   color: '#ff5722' },
-  { label: 'CRITICAL', color: '#ff1744' },
+  { label: 'SEVERE',   color: '#ff7043' },
+  { label: 'CRITICAL', color: '#ff5c8a' },
 ]
 
 /* ══════════════════════════════════════════════
@@ -139,12 +139,13 @@ function StatCard({ label, value, accent, delay = 0, large = false }) {
         borderTop: `2px solid ${accent || 'transparent'}`,
       }}
     >
-      <span style={{ fontSize: 11, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--muted)' }}>
+      <span style={{ fontSize: 11, letterSpacing: '0.8px', textTransform: 'uppercase', color: '#cbd5e1', fontWeight: 650 }}>
         {label}
       </span>
       <span style={{
         fontSize: large ? 30 : 22, fontWeight: 750,
-        fontFamily: 'var(--mono)', color: accent || 'var(--text)',
+        fontFamily: 'var(--mono)', color: accent || '#f8fafc',
+        textShadow: accent ? `0 0 10px ${accent}66` : 'none',
         lineHeight: 1.1, wordBreak: 'break-word',
       }}>
         {value ?? '—'}
@@ -174,13 +175,18 @@ function CountdownCard({ label, etaSeconds, accent, delay = 0 }) {
         borderTop: `2px solid ${accent || 'transparent'}`,
       }}
     >
-      <span style={{ fontSize: 11, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--muted)' }}>
+      <span style={{ fontSize: 11, letterSpacing: '0.8px', textTransform: 'uppercase', color: '#cbd5e1', fontWeight: 650 }}>
         {label}
       </span>
-      <span style={{ fontSize: 30, fontWeight: 750, fontFamily: 'var(--mono)', color: accent || 'var(--text)', lineHeight: 1.1 }}>
+      <span style={{
+        fontSize: 30, fontWeight: 750, fontFamily: 'var(--mono)',
+        color: accent || '#f8fafc',
+        textShadow: accent ? `0 0 12px ${accent}66` : 'none',
+        lineHeight: 1.1
+      }}>
         {fmtCountdown(remaining)}
       </span>
-      <span style={{ fontSize: 12, color: 'var(--muted)' }}>live countdown</span>
+      <span style={{ fontSize: 12, color: '#94a3b8' }}>live countdown</span>
     </Motion.div>
   )
 }
@@ -199,11 +205,11 @@ function ModeToggle({ mode, onChange }) {
           textTransform: 'uppercase', fontFamily: 'var(--mono)',
           transition: 'background 200ms, color 200ms',
           background: mode === m
-            ? m === 'live' ? 'rgba(53,242,140,0.22)' : 'rgba(255,59,59,0.22)'
+            ? m === 'live' ? 'rgba(56,239,125,0.22)' : 'rgba(255,92,138,0.25)'
             : 'transparent',
           color: mode === m
-            ? m === 'live' ? 'var(--risk-low)' : 'var(--risk-high)'
-            : 'var(--muted)',
+            ? m === 'live' ? '#38ef7d' : '#ff5c8a'
+            : '#94a3b8',
         }}>
           {m === 'live'
             ? <span style={{ display:'inline-flex', alignItems:'center', gap:5 }}><LiveDot active={mode === 'live'} /> LIVE</span>
@@ -220,11 +226,13 @@ function ModeToggle({ mode, onChange }) {
 ══════════════════════════════════════════════ */
 function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
   const isSim = mode === 'simulation'
-  const bannerColor = sevColor || (isSim ? '#ff1744' : '#35f28c')
-  const isSevere = isSim || (sevColor && sevColor !== '#35f28c' && sevColor !== 'green')
+  const bannerColor = isSim
+    ? '#ff5c8a'
+    : (sevColor && !/green|#35f28c/i.test(sevColor) ? sevColor : '#38ef7d')
+  const isSevere = isSim || (sevColor && !/green|#35f28c/i.test(sevColor))
   const threatLabel = isSim
     ? 'CRITICAL EMERGENCY'
-    : (!stormClass || stormClass === 'NOMINAL' ? 'MONITORING' : 'ACTIVE STORM')
+    : (!stormClass || stormClass === 'NOMINAL' ? 'NOMINAL MONITORING' : 'ACTIVE STORM')
   const impactStatus = etaSeconds > 0
     ? `IMPACT IN ${fmtCountdown(etaSeconds)}`
     : etaSeconds === 0 ? 'IMPACT NOW'
@@ -237,8 +245,8 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
       transition={{ type: 'spring', stiffness: 100, damping: 16 }}
       style={{
         marginBottom: 18, borderRadius: 'var(--radius-md)',
-        border: `1.5px solid ${bannerColor}${isSevere ? 'cc' : '55'}`,
-        background: `linear-gradient(135deg, ${bannerColor}18 0%, ${bannerColor}08 50%, rgba(0,0,0,0.25) 100%)`,
+        border: `1.5px solid ${bannerColor}${isSevere ? 'cc' : '66'}`,
+        background: `linear-gradient(135deg, ${bannerColor}22 0%, ${bannerColor}0d 50%, rgba(5,6,15,0.75) 100%)`,
         boxShadow: isSevere
           ? `0 0 48px ${bannerColor}44, 0 0 100px ${bannerColor}22, inset 0 0 40px ${bannerColor}11`
           : `0 0 24px ${bannerColor}22`,
@@ -257,22 +265,30 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
         {/* Pulse icon */}
         <div style={{
           width: 48, height: 48, borderRadius: '50%',
-          background: `${bannerColor}22`, border: `2px solid ${bannerColor}88`,
+          background: `${bannerColor}25`, border: `2px solid ${bannerColor}aa`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: `0 0 20px ${bannerColor}44`,
+          boxShadow: `0 0 20px ${bannerColor}55`,
           animation: isSevere ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
         }}>
-          <AlertTriangle size={20} color={bannerColor} strokeWidth={2} />
+          <AlertTriangle size={20} color={bannerColor} strokeWidth={2.4} />
         </div>
 
         {/* Title */}
         <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ fontSize: 10, letterSpacing: '2.5px', color: bannerColor, fontFamily: 'var(--mono)', marginBottom: 4, opacity: 0.8 }}>
+          <div style={{
+            fontSize: 11, letterSpacing: '2.5px',
+            color: isSim ? '#ff9ebb' : '#86efac',
+            fontFamily: 'var(--mono)', marginBottom: 4, fontWeight: 700
+          }}>
             SOLAR SENTINEL COMMAND · {mode.toUpperCase()} MODE
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.4px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={18} color={bannerColor} strokeWidth={2} />
+          <div style={{
+            fontSize: 20, fontWeight: 800, letterSpacing: '0.5px',
+            color: '#ffffff', display: 'flex', alignItems: 'center', gap: 10,
+            textShadow: '0 2px 10px rgba(0,0,0,0.7)'
+          }}>
+            <AlertTriangle size={18} color={bannerColor} strokeWidth={2.2} />
             SOLAR STORM STATUS
           </div>
         </div>
@@ -286,10 +302,22 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
           ].map(({ label, value }, i) => (
             <div key={label} style={{
               textAlign: 'center', padding: '0 20px',
-              borderLeft: i > 0 ? `1px solid ${bannerColor}33` : 'none',
+              borderLeft: i > 0 ? `1px solid ${bannerColor}44` : 'none',
             }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 5 }}>{label}</div>
-              <div style={{ fontSize: i === 0 ? 24 : 14, fontWeight: 750, color: bannerColor, fontFamily: 'var(--mono)', letterSpacing: '0.5px' }}>{value}</div>
+              <div style={{
+                fontSize: 10, color: '#cbd5e1', letterSpacing: '1px',
+                textTransform: 'uppercase', marginBottom: 5, fontWeight: 650
+              }}>
+                {label}
+              </div>
+              <div style={{
+                fontSize: i === 0 ? 22 : 14, fontWeight: 800,
+                color: bannerColor,
+                fontFamily: 'var(--mono)', letterSpacing: '0.5px',
+                textShadow: `0 0 12px ${bannerColor}88, 0 2px 4px rgba(0,0,0,0.8)`
+              }}>
+                {value}
+              </div>
             </div>
           ))}
         </div>
@@ -297,9 +325,10 @@ function EmergencyBanner({ stormClass, sevColor, etaSeconds, mode }) {
         {/* Live / Sim badge */}
         <div style={{
           padding: '6px 16px', borderRadius: 999,
-          background: `${bannerColor}22`, border: `1px solid ${bannerColor}66`,
+          background: `${bannerColor}25`, border: `1.5px solid ${bannerColor}88`,
           fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)',
-          color: bannerColor, letterSpacing: '1.5px',
+          color: '#ffffff', letterSpacing: '1.5px',
+          textShadow: `0 0 8px ${bannerColor}`,
           animation: isSevere ? 'mgBlink 2s ease infinite' : 'none',
           flexShrink: 0,
         }}>
@@ -318,8 +347,8 @@ function ThreatMeter({ kpIndex }) {
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Globe size={12} color="currentColor" />
+      <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: '#cbd5e1', fontWeight: 650, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Globe size={13} color="#38bdf8" />
         Global Threat Level
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -329,40 +358,41 @@ function ThreatMeter({ kpIndex }) {
           return (
             <Motion.div
               key={t.label}
-              animate={{ opacity: isActive ? 1 : isPast ? 0.75 : 0.52, scale: isActive ? 1.02 : 1 }}
+              animate={{ opacity: isActive ? 1 : isPast ? 0.88 : 0.72, scale: isActive ? 1.02 : 1 }}
               transition={{ duration: 0.4 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '8px 12px', borderRadius: 8,
-                background: isActive ? `${t.color}18` : 'transparent',
-                border: isActive ? `1px solid ${t.color}66` : '1px solid transparent',
-                boxShadow: isActive ? `0 0 18px ${t.color}33` : 'none',
+                background: isActive ? `${t.color}22` : 'rgba(255,255,255,0.02)',
+                border: isActive ? `1.5px solid ${t.color}99` : '1px solid rgba(255,255,255,0.06)',
+                boxShadow: isActive ? `0 0 20px ${t.color}44` : 'none',
               }}
             >
               <div style={{
-                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                background: isActive || isPast ? t.color : 'rgba(255,255,255,0.15)',
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: isActive || isPast ? t.color : 'rgba(255,255,255,0.25)',
                 boxShadow: isActive ? `0 0 10px ${t.color}` : 'none',
                 animation: isActive ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
               }} />
               {/* progress bar */}
               <div style={{
                 flex: 1, height: 4, borderRadius: 2,
-                background: `${t.color}${isActive ? 'cc' : isPast ? '55' : '18'}`,
+                background: `${t.color}${isActive ? 'ee' : isPast ? '77' : '25'}`,
                 position: 'relative', overflow: 'hidden',
               }}>
                 {isActive && (
                   <div style={{
                     position: 'absolute', inset: 0,
-                    background: `linear-gradient(90deg, transparent, ${t.color}88, transparent)`,
+                    background: `linear-gradient(90deg, transparent, ${t.color}aa, transparent)`,
                     animation: 'scanSlide 2s linear infinite',
                   }} />
                 )}
               </div>
               <div style={{
-                fontSize: 10, fontWeight: 750, fontFamily: 'var(--mono)',
-                letterSpacing: '1.5px', minWidth: 64, textAlign: 'right',
-                color: isActive ? t.color : isPast ? `${t.color}cc` : 'rgba(255,255,255,0.55)',
+                fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)',
+                letterSpacing: '1.5px', minWidth: 68, textAlign: 'right',
+                color: isActive ? t.color : isPast ? `${t.color}` : '#94a3b8',
+                textShadow: isActive ? `0 0 10px ${t.color}88` : 'none',
               }}>
                 {t.label}
               </div>
@@ -370,9 +400,9 @@ function ThreatMeter({ kpIndex }) {
           )
         })}
       </div>
-      <div style={{ marginTop: 12, fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', display: 'flex', gap: 6 }}>
-        <span>Kp Index:</span>
-        <span style={{ color: activeColor, fontWeight: 650 }}>{kpIndex ?? '—'}</span>
+      <div style={{ marginTop: 12, fontSize: 12, color: '#cbd5e1', fontFamily: 'var(--mono)', display: 'flex', gap: 8, alignItems: 'center' }}>
+        <span style={{ color: '#94a3b8' }}>Kp Index:</span>
+        <span style={{ color: activeColor, fontWeight: 750, fontSize: 14, textShadow: `0 0 8px ${activeColor}88` }}>{kpIndex ?? '—'}</span>
       </div>
     </div>
   )
@@ -383,12 +413,12 @@ function ThreatMeter({ kpIndex }) {
 ══════════════════════════════════════════════ */
 function DefconCard({ kpIndex, stormClass, mode }) {
   const defconLevel = calcDefcon(kpIndex ?? 0, stormClass, mode === 'simulation')
-  const activeMeta  = DEFCON_META[defconLevel]
+  const _activeMeta  = DEFCON_META[defconLevel]
 
   return (
     <div className="card glass neon-border" style={{ padding: '18px 20px' }}>
-      <div style={{ fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Shield size={12} color="currentColor" />
+      <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: '#cbd5e1', fontWeight: 650, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Shield size={13} color="#a855f7" />
         Space Weather DEFCON
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -398,34 +428,39 @@ function DefconCard({ kpIndex, stormClass, mode }) {
           return (
             <Motion.div
               key={lvl}
-              animate={{ opacity: isActive ? 1 : 0.5, scale: isActive ? 1.02 : 1 }}
+              animate={{ opacity: isActive ? 1 : 0.78, scale: isActive ? 1.02 : 1 }}
               transition={{ duration: 0.35 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '7px 10px', borderRadius: 8,
-                background: isActive ? `${meta.color}18` : 'transparent',
-                border: isActive ? `1px solid ${meta.color}77` : '1px solid transparent',
-                boxShadow: isActive ? `0 0 20px ${meta.color}33` : 'none',
+                background: isActive ? `${meta.color}22` : 'rgba(255,255,255,0.02)',
+                border: isActive ? `1.5px solid ${meta.color}aa` : '1px solid rgba(255,255,255,0.06)',
+                boxShadow: isActive ? `0 0 20px ${meta.color}44` : 'none',
               }}
             >
               {/* Level box */}
               <div style={{
                 width: 30, height: 30, borderRadius: 7, flexShrink: 0,
-                background: isActive ? meta.color : 'rgba(255,255,255,0.06)',
+                background: isActive ? meta.color : 'rgba(255,255,255,0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'var(--mono)', fontWeight: 750, fontSize: 14,
-                color: isActive ? '#000' : 'rgba(255,255,255,0.55)',
-                boxShadow: isActive ? `0 0 14px ${meta.color}88` : 'none',
+                fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 14,
+                color: isActive ? '#050714' : '#e2e8f0',
+                boxShadow: isActive ? `0 0 16px ${meta.color}aa` : 'none',
                 animation: isActive && lvl <= 2 ? 'mgPulse 1.4s ease-in-out infinite' : 'none',
               }}>
                 {lvl}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)', letterSpacing: '0.8px', color: isActive ? meta.color : 'rgba(255,255,255,0.65)' }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 750, fontFamily: 'var(--mono)',
+                  letterSpacing: '0.8px',
+                  color: isActive ? meta.color : '#e2e8f0',
+                  textShadow: isActive ? `0 0 8px ${meta.color}88` : 'none',
+                }}>
                   {meta.label}
                 </div>
                 {isActive && (
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+                  <div style={{ fontSize: 10, color: '#f1f5f9', marginTop: 2, fontWeight: 500 }}>
                     {meta.desc}
                   </div>
                 )}
@@ -891,9 +926,11 @@ export default function MagStormDashboardPage() {
   const aviationAlerts = data?.aviation_alerts ?? []
   const gridTriggers   = data?.grid_heatmap_triggers ?? []
 
-  /* derive theme accent from severity_color */
-  const accent     = sevColor || (mode === 'simulation' ? 'var(--risk-high)' : 'var(--neonC)')
-  const glowStyle  = sevColor ? { boxShadow: `0 0 32px ${sevColor}44, 0 0 8px ${sevColor}22` } : {}
+  /* derive theme accent from severity_color with high-luminance fallback */
+  const accent     = mode === 'simulation'
+    ? '#ff5c8a'
+    : (sevColor && !/green|#35f28c/i.test(sevColor) ? sevColor : '#38ef7d')
+  const glowStyle  = { boxShadow: `0 0 32px ${accent}44, 0 0 8px ${accent}22` }
 
   /* derived threat / DEFCON values */
   const { level: threatLevel, color: threatColor } = getThreatLevel(kpIndex)
@@ -901,7 +938,8 @@ export default function MagStormDashboardPage() {
   const defconMeta  = DEFCON_META[defconLevel]
 
   /* banner color guaranteed hex */
-  const bannerHex   = sevColor || (mode === 'simulation' ? '#ff1744' : '#35f28c')
+  const bannerHex   = accent
+
 
   return (
     <PageTransition>
@@ -1036,23 +1074,23 @@ export default function MagStormDashboardPage() {
                         { label: 'Grid Regions',    val: gridTriggers.length,   Icon: Activity, color: '#3b82f6' },
                         { label: 'Aviation Alerts', val: aviationAlerts.length, Icon: Plane,    color: '#22d3ee' },
                         { label: 'Actions Queued',  val: autoActions.length,    Icon: Shield,   color: '#ffbf1f' },
-                      ].map(({ label, val, Icon, color }) => (
+                      ].map((item) => (
                         <Motion.div
-                          key={label}
+                          key={item.label}
                           initial={{ opacity: 0, scale: 0.94 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ type: 'spring', stiffness: 220, damping: 22 }}
                           style={{
                             background: 'rgba(255,255,255,0.04)', borderRadius: 10,
-                            padding: '12px 12px', border: `1px solid ${color}33`,
+                            padding: '12px 12px', border: `1px solid ${item.color}33`,
                             display: 'flex', flexDirection: 'column', gap: 4,
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <Icon size={16} color={color} strokeWidth={1.75} />
+                            <item.Icon size={16} color={item.color} strokeWidth={1.75} />
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</div>
-                          <div style={{ fontSize: 20, fontWeight: 750, fontFamily: 'var(--mono)', color }}>{val ?? '—'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{item.label}</div>
+                          <div style={{ fontSize: 20, fontWeight: 750, fontFamily: 'var(--mono)', color: item.color }}>{item.val ?? '—'}</div>
                         </Motion.div>
                       ))}
                     </div>

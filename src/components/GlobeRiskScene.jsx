@@ -41,10 +41,31 @@ function createOrbitGeometry(radius, segments = 240) {
   return new THREE.BufferGeometry().setFromPoints(points)
 }
 
-export default function GlobeRiskScene({ className, satellites = [], onSelectSatellite }) {
+export default function GlobeRiskScene({
+  className,
+  satellites = [],
+  selectedSatellite = null,
+  onSelectSatellite,
+}) {
   const mountRef = useRef(null)
   const rafRef = useRef(0)
+  const satGroupRef = useRef(null)
+  const selectionReticleRef = useRef(null)
+  const reticleRingsRef = useRef({ inner: null, outer: null })
   const clickableRef = useRef([])
+  const satObjectsRef = useRef([])
+  const downPosRef = useRef({ x: 0, y: 0 })
+
+  // Keep callback and selection refs up to date without triggering scene recreation
+  const onSelectRef = useRef(onSelectSatellite)
+  useEffect(() => {
+    onSelectRef.current = onSelectSatellite
+  }, [onSelectSatellite])
+
+  const selectedSatRef = useRef(selectedSatellite)
+  useEffect(() => {
+    selectedSatRef.current = selectedSatellite
+  }, [selectedSatellite])
 
   // Only satellites with valid coordinates from the API
   const preparedSatellites = useMemo(() => {
@@ -75,6 +96,7 @@ export default function GlobeRiskScene({ className, satellites = [], onSelectSat
       })
   }, [satellites])
 
+  // 1. Initialize Scene, Camera, Renderer, Earth & Controls ONCE on mount
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
@@ -242,56 +264,56 @@ export default function GlobeRiskScene({ className, satellites = [], onSelectSat
       gridGroup.add(line)
     })
 
-    // Satellite Markers & Illustrative Orbit Rings
+    // Dedicated Group for Satellites (updated dynamically without resetting Earth)
     const satGroup = new THREE.Group()
     earthGroup.add(satGroup)
+    satGroupRef.current = satGroup
 
-    const satGeometry = new THREE.SphereGeometry(0.08, 16, 16)
-    const satObjects = preparedSatellites.map((satellite) => {
-      const orbitRadius = EARTH_RADIUS + satellite.altitude
-      const orbitGeometry = createOrbitGeometry(orbitRadius)
-      const orbitMaterial = new THREE.LineBasicMaterial({
-        color: satellite.color,
-        transparent: true,
-        opacity: satellite.level === 'high' ? 0.45 : satellite.level === 'medium' ? 0.3 : 0.18,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      })
-      const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial)
-      orbit.rotation.x = (satellite.lat * Math.PI) / 180
-      orbit.rotation.y = (satellite.lon * Math.PI) / 180
-      satGroup.add(orbit)
+    // 3D Targeting Reticle for Selected Satellite
+    const reticleGroup = new THREE.Group()
+    reticleGroup.visible = false
 
-      const satMaterial = new THREE.MeshPhongMaterial({
-        color: satellite.color,
-        emissive: new THREE.Color(satellite.color),
-        emissiveIntensity: satellite.level === 'high' ? 2.0 : satellite.level === 'medium' ? 1.4 : 0.9,
-        shininess: 90,
-        transparent: true,
-        opacity: 0.95,
-      })
-      const mesh = new THREE.Mesh(satGeometry, satMaterial)
-      mesh.userData.satellite = satellite
-
-      // Position satellite precisely on the sphere at its real lat/lon & altitude
-      const phi = (90 - satellite.lat) * (Math.PI / 180)
-      const theta = (satellite.lon + 180) * (Math.PI / 180)
-      const r = orbitRadius
-      const x = -(r * Math.sin(phi) * Math.cos(theta))
-      const y = r * Math.cos(phi)
-      const z = r * Math.sin(phi) * Math.sin(theta)
-      mesh.position.set(x, y, z)
-
-      satGroup.add(mesh)
-      return { satellite, mesh, orbit }
+    const innerRingGeo = new THREE.RingGeometry(0.16, 0.20, 32)
+    const innerRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
     })
+    const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat)
+    reticleGroup.add(innerRing)
 
-    clickableRef.current = satObjects.map((s) => s.mesh)
+    const outerRingGeo = new THREE.RingGeometry(0.26, 0.29, 32)
+    const outerRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+    })
+    const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat)
+    reticleGroup.add(outerRing)
 
+    earthGroup.add(reticleGroup)
+    selectionReticleRef.current = reticleGroup
+    reticleRingsRef.current = { inner: innerRing, outer: outerRing }
+
+    // Click Detection (Differentiates between rotation drag and satellite click)
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
 
     const onPointerDown = (event) => {
+      downPosRef.current = { x: event.clientX, y: event.clientY }
+    }
+
+    const onPointerUp = (event) => {
+      const dx = event.clientX - downPosRef.current.x
+      const dy = event.clientY - downPosRef.current.y
+      if (Math.hypot(dx, dy) > 6) return // Dragged/rotated, not a click
+
       const rect = renderer.domElement.getBoundingClientRect()
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
@@ -299,11 +321,15 @@ export default function GlobeRiskScene({ className, satellites = [], onSelectSat
 
       const hits = raycaster.intersectObjects(clickableRef.current)
       if (hits.length > 0) {
-        onSelectSatellite?.(hits[0].object.userData.satellite)
+        const sat = hits[0].object.userData?.satellite
+        if (sat) {
+          onSelectRef.current?.(sat)
+        }
       }
     }
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
+    renderer.domElement.addEventListener('pointerup', onPointerUp)
 
     const resize = () => {
       const width = mount.clientWidth
@@ -327,15 +353,51 @@ export default function GlobeRiskScene({ className, satellites = [], onSelectSat
       earthGroup.rotation.y += delta * 0.03
       clouds.rotation.y += delta * 0.038
 
-      satObjects.forEach((obj) => {
-        if (obj.satellite.level === 'high' || obj.satellite.level === 'medium') {
+      const currentSel = selectedSatRef.current
+      let activeTarget = null
+
+      satObjectsRef.current.forEach((obj) => {
+        const isSelected =
+          currentSel &&
+          (currentSel.id === obj.satellite.id || currentSel.name === obj.satellite.name)
+
+        if (isSelected) {
+          activeTarget = obj
+          const pulse = 0.5 + 0.5 * Math.sin(elapsed * 8)
+          obj.mesh.scale.setScalar(1.5 + pulse * 0.4)
+          obj.mesh.material.emissive.setHex(0x00f0ff)
+          obj.mesh.material.emissiveIntensity = 3.0 + pulse * 2.0
+          obj.mesh.material.opacity = 1.0
+        } else if (obj.satellite.level === 'high' || obj.satellite.level === 'medium') {
           const pulse = 0.5 + 0.5 * Math.sin(elapsed * (obj.satellite.level === 'high' ? 7 : 4))
           const s = (obj.satellite.level === 'high' ? 1.0 : 0.9) + pulse * 0.45
           obj.mesh.scale.setScalar(s)
           obj.mesh.material.opacity = 0.7 + 0.3 * pulse
-          obj.mesh.material.emissiveIntensity = obj.satellite.level === 'high' ? 1.5 + pulse : 1.1 + pulse * 0.5
+          obj.mesh.material.emissive.set(obj.satellite.color)
+          obj.mesh.material.emissiveIntensity =
+            obj.satellite.level === 'high' ? 1.5 + pulse : 1.1 + pulse * 0.5
+        } else {
+          obj.mesh.scale.setScalar(0.9)
+          obj.mesh.material.opacity = 0.95
+          obj.mesh.material.emissive.set(obj.satellite.color)
+          obj.mesh.material.emissiveIntensity = 0.9
         }
       })
+
+      // Update targeting reticle orientation and position over active target
+      if (activeTarget && selectionReticleRef.current) {
+        selectionReticleRef.current.visible = true
+        selectionReticleRef.current.position.copy(activeTarget.mesh.position)
+        selectionReticleRef.current.lookAt(camera.position)
+        if (reticleRingsRef.current.inner) {
+          reticleRingsRef.current.inner.rotation.z = elapsed * 1.5
+        }
+        if (reticleRingsRef.current.outer) {
+          reticleRingsRef.current.outer.rotation.z = -elapsed * 0.8
+        }
+      } else if (selectionReticleRef.current) {
+        selectionReticleRef.current.visible = false
+      }
 
       controls.update()
       renderer.render(scene, camera)
@@ -346,11 +408,208 @@ export default function GlobeRiskScene({ className, satellites = [], onSelectSat
     return () => {
       cancelAnimationFrame(rafRef.current)
       renderer.domElement.removeEventListener('pointerdown', onPointerDown)
+      renderer.domElement.removeEventListener('pointerup', onPointerUp)
       ro.disconnect()
-      mount.removeChild(renderer.domElement)
+      if (mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement)
+      }
       renderer.dispose()
     }
-  }, [preparedSatellites, onSelectSatellite])
+  }, []) // Empty dependency array: Mounts once and NEVER tears down the Earth model!
 
-  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
+  // 2. Dynamically sync satellite meshes inside satGroup whenever filtered list changes
+  useEffect(() => {
+    const satGroup = satGroupRef.current
+    if (!satGroup) return
+
+    // Clean up previous satellites without touching Earth, textures, or renderer
+    while (satGroup.children.length > 0) {
+      const child = satGroup.children[0]
+      satGroup.remove(child)
+      if (child.geometry) child.geometry.dispose()
+      if (child.material) {
+        if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose())
+        else child.material.dispose()
+      }
+    }
+
+    const satGeometry = new THREE.SphereGeometry(0.08, 16, 16)
+    const hitGeometry = new THREE.SphereGeometry(0.22, 8, 8) // Generous invisible raycast hit box
+    const hitMaterial = new THREE.MeshBasicMaterial({ visible: false })
+
+    const satObjects = preparedSatellites.map((satellite) => {
+      const orbitRadius = EARTH_RADIUS + satellite.altitude
+      const orbitGeometry = createOrbitGeometry(orbitRadius)
+      const orbitMaterial = new THREE.LineBasicMaterial({
+        color: satellite.color,
+        transparent: true,
+        opacity: satellite.level === 'high' ? 0.45 : satellite.level === 'medium' ? 0.3 : 0.18,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+      const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial)
+      orbit.rotation.x = (satellite.lat * Math.PI) / 180
+      orbit.rotation.y = (satellite.lon * Math.PI) / 180
+      satGroup.add(orbit)
+
+      const satMaterial = new THREE.MeshPhongMaterial({
+        color: satellite.color,
+        emissive: new THREE.Color(satellite.color),
+        emissiveIntensity:
+          satellite.level === 'high' ? 2.0 : satellite.level === 'medium' ? 1.4 : 0.9,
+        shininess: 90,
+        transparent: true,
+        opacity: 0.95,
+      })
+      const mesh = new THREE.Mesh(satGeometry, satMaterial)
+      mesh.userData.satellite = satellite
+
+      // Position satellite precisely on the sphere at its real lat/lon & altitude
+      const phi = (90 - satellite.lat) * (Math.PI / 180)
+      const theta = (satellite.lon + 180) * (Math.PI / 180)
+      const r = orbitRadius
+      const x = -(r * Math.sin(phi) * Math.cos(theta))
+      const y = r * Math.cos(phi)
+      const z = r * Math.sin(phi) * Math.sin(theta)
+      mesh.position.set(x, y, z)
+      satGroup.add(mesh)
+
+      // Invisible larger hit box mesh for seamless, easy clicking
+      const hitMesh = new THREE.Mesh(hitGeometry, hitMaterial)
+      hitMesh.position.set(x, y, z)
+      hitMesh.userData.satellite = satellite
+      satGroup.add(hitMesh)
+
+      return { satellite, mesh, hitMesh, orbit }
+    })
+
+    satObjectsRef.current = satObjects
+    clickableRef.current = satObjects.map((s) => s.hitMesh)
+  }, [preparedSatellites])
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
+
+      {/* Floating Tactical Telemetry HUD Card on Globe */}
+      {selectedSatellite && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: 16,
+            zIndex: 10,
+            background: 'rgba(5, 8, 22, 0.88)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            borderRadius: 12,
+            padding: '12px 16px',
+            maxWidth: 320,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 240, 255, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            pointerEvents: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background:
+                    (selectedSatellite.risk_score ?? selectedSatellite.riskScore) >= 70
+                      ? '#ff3b3b'
+                      : (selectedSatellite.risk_score ?? selectedSatellite.riskScore) >= 40
+                      ? '#ffbf1f'
+                      : '#35f28c',
+                  boxShadow: '0 0 8px currentColor',
+                }}
+              />
+              <span style={{ fontSize: 13, fontWeight: 750, color: '#ffffff', fontFamily: 'var(--mono)' }}>
+                {selectedSatellite.name}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectRef.current?.(null)
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                fontSize: 16,
+                padding: '0 4px',
+                lineHeight: 1,
+              }}
+              title="Deselect Satellite"
+            >
+              ×
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: 11 }}>
+            <div>
+              <span style={{ color: '#94a3b8', fontSize: 9, textTransform: 'uppercase' }}>Orbit</span>
+              <div style={{ color: 'var(--neonC)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+                {selectedSatellite.orbit || 'LEO'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: '#94a3b8', fontSize: 9, textTransform: 'uppercase' }}>Altitude</span>
+              <div style={{ color: '#ffffff', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+                {selectedSatellite.altitudeKm ?? selectedSatellite.alt
+                  ? `${selectedSatellite.altitudeKm ?? selectedSatellite.alt} km`
+                  : 'N/A'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: '#94a3b8', fontSize: 9, textTransform: 'uppercase' }}>Velocity</span>
+              <div style={{ color: '#ffffff', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+                {selectedSatellite.velocityKms ? `${selectedSatellite.velocityKms} km/s` : '7.6 km/s'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: '#94a3b8', fontSize: 9, textTransform: 'uppercase' }}>Risk Index</span>
+              <div
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontWeight: 700,
+                  color:
+                    (selectedSatellite.risk_score ?? selectedSatellite.riskScore) >= 70
+                      ? '#ff3b3b'
+                      : (selectedSatellite.risk_score ?? selectedSatellite.riskScore) >= 40
+                      ? '#ffbf1f'
+                      : '#35f28c',
+                }}
+              >
+                {Number(selectedSatellite.risk_score ?? selectedSatellite.riskScore ?? 0).toFixed(1)} / 100
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: 10,
+              color: '#cbd5e1',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingTop: 6,
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>Status:</span>
+            <span style={{ color: 'var(--neonC)', fontFamily: 'var(--mono)' }}>
+              {selectedSatellite.recommendation || 'LOCKED & NOMINAL'}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }

@@ -89,6 +89,7 @@ export default function GlobeRiskPage() {
               <GlobeRiskScene
                 className="globeRiskCanvas"
                 satellites={displayedSatellites}
+                selectedSatellite={selectedSatellite}
                 onSelectSatellite={setSelectedSatellite}
               />
 

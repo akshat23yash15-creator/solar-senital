@@ -221,7 +221,7 @@ function UploadZone({ onFile, disabled }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-export default function AIPredictionPanel({ compact = false }) {
+export default function AIPredictionPanel() {
   const {
     prediction,
     predicting,
