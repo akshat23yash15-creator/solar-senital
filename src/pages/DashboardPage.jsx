@@ -575,6 +575,7 @@ export default function DashboardPage() {
                           <GlobeRiskScene
                             satellites={filteredSatellites}
                             selectedSatellite={selectedSat}
+                            showOverlay={true}
                             onSelectSatellite={handleSelectSatellite}
                           />
                         )}

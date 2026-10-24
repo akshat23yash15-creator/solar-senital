@@ -192,34 +192,32 @@ export default function GlobeRiskPage() {
                 </button>
               </div>
 
-              {/* Status and count badge */}
-              <div
-                className="subtle"
-                style={{
-                  position: 'absolute',
-                  left: 16,
-                  bottom: 38,
-                  fontSize: 11,
-                  fontFamily: 'var(--mono)',
-                  color: 'rgba(255, 255, 255, 0.75)',
-                  background: 'rgba(0,0,0,0.65)',
-                  padding: '5px 10px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  pointerEvents: 'none',
-                  zIndex: 20,
-                }}
-              >
-                {isLoading ? (
-                  'Querying /api/helio-risk…'
-                ) : error ? (
-                  <span style={{ color: 'var(--risk-high)' }}>Error: {error}</span>
-                ) : (
-                  <span>
-                    Rendering {displayedSatellites.length} verified API satellites · Drag to rotate · Scroll to zoom
-                  </span>
-                )}
-              </div>
+              {/* Loading / Error indicator */}
+              {(isLoading || error) && (
+                <div
+                  className="subtle"
+                  style={{
+                    position: 'absolute',
+                    left: 16,
+                    bottom: 38,
+                    fontSize: 11,
+                    fontFamily: 'var(--mono)',
+                    color: 'rgba(255, 255, 255, 0.75)',
+                    background: 'rgba(0,0,0,0.65)',
+                    padding: '5px 10px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    pointerEvents: 'none',
+                    zIndex: 20,
+                  }}
+                >
+                  {isLoading ? (
+                    'Querying /api/helio-risk…'
+                  ) : (
+                    <span style={{ color: 'var(--risk-high)' }}>Error: {error}</span>
+                  )}
+                </div>
+              )}
 
               {/* ── Illustrative Orbit Rings Labeling Requirement ── */}
               <div

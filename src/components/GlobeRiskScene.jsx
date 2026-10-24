@@ -45,6 +45,7 @@ export default function GlobeRiskScene({
   className,
   satellites = [],
   selectedSatellite = null,
+  showOverlay = false,
   onSelectSatellite,
 }) {
   const mountRef = useRef(null)
@@ -491,8 +492,8 @@ export default function GlobeRiskScene({
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
 
-      {/* Floating Tactical Telemetry HUD Card on Globe */}
-      {selectedSatellite && (
+      {/* Floating Tactical Telemetry HUD Card on Globe (only rendered when showOverlay is true to avoid duplicate overlays) */}
+      {showOverlay && selectedSatellite && (
         <div
           style={{
             position: 'absolute',
