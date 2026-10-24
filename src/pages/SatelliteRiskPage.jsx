@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import RiskBadge from '../components/RiskBadge'
 import { RiskBar } from '../components/Charts'
-import { fetchFullHelioRisk } from '../utils/helioApi'
+import { fetchFullHelioRisk, pickCuratedTop50Satellites } from '../utils/helioApi'
 import '../styles/charts.css'
 
 const columns = [
@@ -68,7 +68,11 @@ export default function SatelliteRiskPage() {
         ? satData.all_satellites && satData.all_satellites.length > 0
           ? satData.all_satellites
           : satData.curated_top_10 || []
-        : satData.curated_top_10 || []
+        : pickCuratedTop50Satellites(
+            satData.all_satellites && satData.all_satellites.length > 0
+              ? satData.all_satellites
+              : satData.curated_top_10 || []
+          )
 
     return sourceList.filter((s) => {
       // Risk level filter: All / High / Medium / Low
@@ -154,7 +158,7 @@ export default function SatelliteRiskPage() {
                       }}
                       onClick={() => setViewMode('curated')}
                     >
-                      Curated Top 10
+                      Curated Top 50
                     </button>
                     <button
                       className="btn"

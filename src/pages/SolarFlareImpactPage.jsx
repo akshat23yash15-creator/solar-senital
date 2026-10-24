@@ -22,7 +22,7 @@ import Topbar from '../components/Topbar'
 import SolarDiskViewer from '../components/SolarDiskViewer'
 import GridImpactMap from '../components/GridImpactMap'
 import { fetchLivePrediction, fetchInfrastructureImpact } from '../utils/solarPredictionApi'
-import { fetchFullHelioRisk } from '../utils/helioApi'
+import { fetchFullHelioRisk, pickCuratedTop50Satellites } from '../utils/helioApi'
 import '../styles/flareImpact.css'
 
 /* ── Helpers ── */
@@ -178,7 +178,11 @@ export default function SolarFlareImpactPage() {
   const displayedSatellites = useMemo(() => {
     const baseList =
       satViewMode === 'curated'
-        ? satData?.curated_top_10 ?? []
+        ? pickCuratedTop50Satellites(
+            satData?.all_satellites && satData.all_satellites.length > 0
+              ? satData.all_satellites
+              : satData?.curated_top_10 ?? []
+          )
         : satData?.all_satellites ?? satData?.curated_top_10 ?? []
 
     if (!Array.isArray(baseList)) return []
@@ -785,7 +789,7 @@ export default function SolarFlareImpactPage() {
                         }}
                         onClick={() => setSatViewMode('curated')}
                       >
-                        Curated Top 10
+                        Curated Top 50
                       </button>
                       <button
                         className="sfi-btn"

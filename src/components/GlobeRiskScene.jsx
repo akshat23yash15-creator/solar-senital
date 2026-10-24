@@ -32,12 +32,47 @@ function orbitAltitudeFromType(type) {
   }
 }
 
-function createOrbitGeometry(radius, segments = 240) {
+function createSatelliteOrbitGeometry(posVector, satellite, radius, segments = 180) {
+  const u = posVector.clone().normalize()
+  const ref = Math.abs(u.y) < 0.92 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)
+  const east = new THREE.Vector3().crossVectors(ref, u).normalize()
+  const north = new THREE.Vector3().crossVectors(u, east).normalize()
+
+  let heading = Math.PI / 4
+  if (satellite.inclinationDeg && Number.isFinite(satellite.inclinationDeg)) {
+    const inc = (satellite.inclinationDeg * Math.PI) / 180
+    const lat = (satellite.lat * Math.PI) / 180
+    const cosLat = Math.cos(lat)
+    if (Math.abs(cosLat) > 0.05) {
+      const sinAz = Math.cos(inc) / cosLat
+      if (Math.abs(sinAz) <= 1) {
+        heading = Math.asin(sinAz)
+      }
+    }
+  } else {
+    const seed =
+      Math.sin((satellite.lat || 1) * 12.9898 + (satellite.lon || 1) * 78.233) * 43758.5453
+    const frac = seed - Math.floor(seed)
+    heading = (0.25 + frac * 0.5) * Math.PI * 0.5
+  }
+
+  const v = new THREE.Vector3()
+    .addScaledVector(east, Math.cos(heading))
+    .addScaledVector(north, Math.sin(heading))
+    .normalize()
+
   const points = []
   for (let i = 0; i <= segments; i += 1) {
     const t = (i / segments) * Math.PI * 2
-    points.push(new THREE.Vector3(Math.cos(t) * radius, 0, Math.sin(t) * radius))
+    points.push(
+      new THREE.Vector3(
+        radius * (Math.cos(t) * u.x + Math.sin(t) * v.x),
+        radius * (Math.cos(t) * u.y + Math.sin(t) * v.y),
+        radius * (Math.cos(t) * u.z + Math.sin(t) * v.z)
+      )
+    )
   }
+
   return new THREE.BufferGeometry().setFromPoints(points)
 }
 
@@ -369,19 +404,30 @@ export default function GlobeRiskScene({
           obj.mesh.material.emissive.setHex(0x00f0ff)
           obj.mesh.material.emissiveIntensity = 3.0 + pulse * 2.0
           obj.mesh.material.opacity = 1.0
-        } else if (obj.satellite.level === 'high' || obj.satellite.level === 'medium') {
-          const pulse = 0.5 + 0.5 * Math.sin(elapsed * (obj.satellite.level === 'high' ? 7 : 4))
-          const s = (obj.satellite.level === 'high' ? 1.0 : 0.9) + pulse * 0.45
-          obj.mesh.scale.setScalar(s)
-          obj.mesh.material.opacity = 0.7 + 0.3 * pulse
-          obj.mesh.material.emissive.set(obj.satellite.color)
-          obj.mesh.material.emissiveIntensity =
-            obj.satellite.level === 'high' ? 1.5 + pulse : 1.1 + pulse * 0.5
+          if (obj.orbit?.material) {
+            obj.orbit.material.opacity = 0.85
+            obj.orbit.material.color.setHex(0x00f0ff)
+          }
         } else {
-          obj.mesh.scale.setScalar(0.9)
-          obj.mesh.material.opacity = 0.95
-          obj.mesh.material.emissive.set(obj.satellite.color)
-          obj.mesh.material.emissiveIntensity = 0.9
+          if (obj.orbit?.material) {
+            obj.orbit.material.opacity =
+              obj.satellite.level === 'high' ? 0.45 : obj.satellite.level === 'medium' ? 0.3 : 0.18
+            obj.orbit.material.color.set(obj.satellite.color)
+          }
+          if (obj.satellite.level === 'high' || obj.satellite.level === 'medium') {
+            const pulse = 0.5 + 0.5 * Math.sin(elapsed * (obj.satellite.level === 'high' ? 7 : 4))
+            const s = (obj.satellite.level === 'high' ? 1.0 : 0.9) + pulse * 0.45
+            obj.mesh.scale.setScalar(s)
+            obj.mesh.material.opacity = 0.7 + 0.3 * pulse
+            obj.mesh.material.emissive.set(obj.satellite.color)
+            obj.mesh.material.emissiveIntensity =
+              obj.satellite.level === 'high' ? 1.5 + pulse : 1.1 + pulse * 0.5
+          } else {
+            obj.mesh.scale.setScalar(0.9)
+            obj.mesh.material.opacity = 0.95
+            obj.mesh.material.emissive.set(obj.satellite.color)
+            obj.mesh.material.emissiveIntensity = 0.9
+          }
         }
       })
 
@@ -440,7 +486,18 @@ export default function GlobeRiskScene({
 
     const satObjects = preparedSatellites.map((satellite) => {
       const orbitRadius = EARTH_RADIUS + satellite.altitude
-      const orbitGeometry = createOrbitGeometry(orbitRadius)
+
+      // Position satellite precisely on the sphere at its real lat/lon & altitude
+      const phi = (90 - satellite.lat) * (Math.PI / 180)
+      const theta = (satellite.lon + 180) * (Math.PI / 180)
+      const r = orbitRadius
+      const x = -(r * Math.sin(phi) * Math.cos(theta))
+      const y = r * Math.cos(phi)
+      const z = r * Math.sin(phi) * Math.sin(theta)
+      const pos = new THREE.Vector3(x, y, z)
+
+      // Orbit path circle passing directly through the satellite's exact position pos
+      const orbitGeometry = createSatelliteOrbitGeometry(pos, satellite, orbitRadius)
       const orbitMaterial = new THREE.LineBasicMaterial({
         color: satellite.color,
         transparent: true,
@@ -449,8 +506,6 @@ export default function GlobeRiskScene({
         depthWrite: false,
       })
       const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial)
-      orbit.rotation.x = (satellite.lat * Math.PI) / 180
-      orbit.rotation.y = (satellite.lon * Math.PI) / 180
       satGroup.add(orbit)
 
       const satMaterial = new THREE.MeshPhongMaterial({
@@ -464,20 +519,12 @@ export default function GlobeRiskScene({
       })
       const mesh = new THREE.Mesh(satGeometry, satMaterial)
       mesh.userData.satellite = satellite
-
-      // Position satellite precisely on the sphere at its real lat/lon & altitude
-      const phi = (90 - satellite.lat) * (Math.PI / 180)
-      const theta = (satellite.lon + 180) * (Math.PI / 180)
-      const r = orbitRadius
-      const x = -(r * Math.sin(phi) * Math.cos(theta))
-      const y = r * Math.cos(phi)
-      const z = r * Math.sin(phi) * Math.sin(theta)
-      mesh.position.set(x, y, z)
+      mesh.position.copy(pos)
       satGroup.add(mesh)
 
       // Invisible larger hit box mesh for seamless, easy clicking
       const hitMesh = new THREE.Mesh(hitGeometry, hitMaterial)
-      hitMesh.position.set(x, y, z)
+      hitMesh.position.copy(pos)
       hitMesh.userData.satellite = satellite
       satGroup.add(hitMesh)
 

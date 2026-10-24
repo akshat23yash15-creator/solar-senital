@@ -1,199 +1,184 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { riskLevelFromScore, riskColorThree } from '../utils/risk'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import dayTexture from '../assets/day.jpg.jpeg'
+import nightTexture from '../assets/night.png'
+import cloudsTexture from '../assets/clouds.png'
+import normalTexture from '../assets/normal.jpg.jpeg'
+import specularTexture from '../assets/specular.jpg.jpeg'
 
-export default function EarthScene({ className, satellites = [] }) {
+const EARTH_RADIUS = 3.65
+
+export default function EarthScene({ className }) {
   const mountRef = useRef(null)
   const rafRef = useRef(0)
 
-  const satMeta = useMemo(() => {
-    return (satellites || []).map((s, idx) => {
-      const score = Number(s.risk_score ?? s.riskScore) || 0
-      const level = s.level || riskLevelFromScore(score)
-      return {
-        ...s,
-        level,
-        color: new THREE.Color(riskColorThree(level)),
-        radius: 3.2 + (idx % 3) * 0.25,
-        speed: 0.1 + (idx % 4) * 0.03,
-        inc: (idx * 25 * Math.PI) / 180,
-        phase: idx * 1.5,
-      }
-    })
-  }, [satellites])
-
+  // Mount 3D Earth Scene once — rock solid, clean, pure rotating blue globe
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
 
-    const scene = new THREE.Scene()
-    // Matches the deep background color of your Home.jsx
-    scene.fog = new THREE.Fog(0x05060f, 12, 45)
+    const width = mount.clientWidth || window.innerWidth || 800
+    const height = mount.clientHeight || window.innerHeight || 600
 
-  const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 1000)
-  // Slightly closer so the Home globe looks bigger.
-  camera.position.set(0, 0, 9.6)
+    const scene = new THREE.Scene()
+    scene.fog = new THREE.Fog(0x05060f, 15, 50)
+
+    const camera = new THREE.PerspectiveCamera(40, width / Math.max(1, height), 0.1, 1000)
+    camera.position.set(0.4, 0.1, 9.8)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(mount.clientWidth, mount.clientHeight)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.setSize(width, height)
     renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
+    renderer.domElement.style.position = 'absolute'
+    renderer.domElement.style.inset = '0'
+    renderer.domElement.style.width = '100%'
+    renderer.domElement.style.height = '100%'
 
-    // --- NEON THEME LIGHTING ---
-    const ambientLight = new THREE.AmbientLight(0x4050ff, 0.6) // Blueish tint
-    scene.add(ambientLight)
+    // Orbit Controls with smooth auto-rotation & gentle manual interaction
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.06
+    controls.rotateSpeed = 0.5
+    controls.enableZoom = false
+    controls.enablePan = false
+    controls.autoRotate = true
+    controls.autoRotateSpeed = 0.4
+    controls.target.set(0, 0, 0)
 
-    const cyanLight = new THREE.DirectionalLight(0x00f2ff, 1.5)
-    cyanLight.position.set(5, 3, 5)
-    scene.add(cyanLight)
+    // Rich Space Lighting
+    scene.add(new THREE.AmbientLight(0x7090ff, 0.85))
+    scene.add(new THREE.HemisphereLight(0x38bdf8, 0x050a1f, 0.95))
 
-    // NOTE: keep textures local/procedural if you want a fully offline demo.
+    const sun = new THREE.DirectionalLight(0xfff8e7, 2.4)
+    sun.position.set(12, 7, 9)
+    scene.add(sun)
+
+    const fill = new THREE.DirectionalLight(0x00f0ff, 1.1)
+    fill.position.set(-10, -2, -6)
+    scene.add(fill)
+
+    // Local Textures (instant, reliable, no external dependencies)
     const loader = new THREE.TextureLoader()
-    const dayTex = loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg')
-    const nightTex = loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_lights_2048.png')
+    const dayMap = loader.load(dayTexture)
+    const normalMap = loader.load(normalTexture)
+    const specularMap = loader.load(specularTexture)
+    const nightMap = loader.load(nightTexture)
+    const cloudMap = loader.load(cloudsTexture)
+
+    dayMap.colorSpace = THREE.SRGBColorSpace
+    nightMap.colorSpace = THREE.SRGBColorSpace
 
     const earthGroup = new THREE.Group()
     scene.add(earthGroup)
 
-    // --- BIGGER + SLIGHTLY TRANSPARENT GLOBE ---
-  const earthRadius = 3.55
-    const earthGeo = new THREE.SphereGeometry(earthRadius, 96, 96)
-    const earthMat = new THREE.MeshStandardMaterial({
-      map: dayTex,
-      emissiveMap: nightTex,
-      emissive: new THREE.Color(0x00aaff), // Cyan neon glow for cities
-  emissiveIntensity: 2.2,
-      metalness: 0.18,
-      roughness: 0.75,
-      color: new THREE.Color(0x050a1a), // Base color matches UI theme
-      transparent: true,
-      opacity: 0.92,
+    // Vibrant Blue Earth Sphere
+    const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, 96, 96)
+    const earthMat = new THREE.MeshPhongMaterial({
+      color: new THREE.Color('#38bdf8'),
+      map: dayMap,
+      normalMap,
+      specularMap,
+      emissiveMap: nightMap,
+      emissive: new THREE.Color('#0ea5e9'),
+      emissiveIntensity: 0.55,
+      specular: new THREE.Color('#bae6fd'),
+      shininess: 32,
+      transparent: false,
     })
-
     const earth = new THREE.Mesh(earthGeo, earthMat)
     earthGroup.add(earth)
 
-    // --- NEON ATMOSPHERE ---
-    const atmoGeo = new THREE.SphereGeometry(earthRadius * 1.035, 96, 96)
+    // Rotating Translucent Clouds
+    const cloudGeo = new THREE.SphereGeometry(EARTH_RADIUS * 1.018, 64, 64)
+    const cloudMat = new THREE.MeshPhongMaterial({
+      map: cloudMap,
+      alphaMap: cloudMap,
+      color: new THREE.Color('#e0f2fe'),
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+    })
+    const clouds = new THREE.Mesh(cloudGeo, cloudMat)
+    earthGroup.add(clouds)
+
+    // Glowing Neon Blue Atmosphere
+    const atmoGeo = new THREE.SphereGeometry(EARTH_RADIUS * 1.13, 64, 64)
     const atmoMat = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       transparent: true,
+      depthWrite: false,
       blending: THREE.AdditiveBlending,
-      uniforms: {
-        glowColor: { value: new THREE.Color(0x00f2ff) },
-        coeficient: { value: 0.15 },
-        power: { value: 3.5 }
-      },
       vertexShader: `
         varying vec3 vNormal;
-        varying vec3 vPosition;
         void main() {
           vNormal = normalize(normalMatrix * normal);
-          vPosition = vec3(modelViewMatrix * vec4(position, 1.0));
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
-        uniform vec3 glowColor;
-        uniform float coeficient;
-        uniform float power;
         varying vec3 vNormal;
-        varying vec3 vPosition;
         void main() {
-          vec3 viewDirection = normalize(-vPosition);
-          float intensity = pow(coeficient + dot(vNormal, viewDirection), power);
-          gl_FragColor = vec4(glowColor, intensity);
+          float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.2);
+          gl_FragColor = vec4(0.0, 0.75, 1.0, 0.42 * intensity);
         }
-      `
+      `,
     })
     const atmosphere = new THREE.Mesh(atmoGeo, atmoMat)
-    earthGroup.add(atmosphere)
+    scene.add(atmosphere)
 
-  // --- SATELLITES & ORBIT LINES ---
-    const satGroup = new THREE.Group()
-    earthGroup.add(satGroup)
-    
-    const satGeo = new THREE.SphereGeometry(0.06, 16, 16)
-    
-  const activeSats = satMeta.map((s) => {
-      // Create Satellite Point
-      const mesh = new THREE.Mesh(
-        satGeo,
-        new THREE.MeshBasicMaterial({
-          color: s.color,
-          transparent: true,
-          opacity: 0.95,
-        })
-      )
-      satGroup.add(mesh)
+    // Responsive Resize Observer
+    const resize = () => {
+      if (!mount) return
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h
+        camera.updateProjectionMatrix()
+        renderer.setSize(w, h)
+      }
+    }
+    const ro = new ResizeObserver(resize)
+    ro.observe(mount)
 
-      // Create Orbit Ring (this is the path we will animate the dot on)
-      const curve = new THREE.EllipseCurve(0, 0, s.radius, s.radius)
-      const points = curve.getPoints(256)
-      const orbitGeo = new THREE.BufferGeometry().setFromPoints(
-        points.map((p) => new THREE.Vector3(p.x, 0, p.y))
-      )
-      const orbitMat = new THREE.LineBasicMaterial({
-        color: s.color,
-        transparent: true,
-        opacity: 0.22,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      })
-      const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat)
-
-      // IMPORTANT: use the same transform for BOTH the line and the satellite position.
-      // We'll move the satellite along the orbit in orbit-local space and then apply
-      // the orbitLine's matrixWorld to place it correctly.
-      orbitLine.rotation.x = s.inc
-      orbitLine.rotation.z = s.phase
-      orbitLine.updateMatrixWorld(true)
-
-      earthGroup.add(orbitLine)
-
-      return { ...s, mesh, orbitLine, orbitPoints: points }
-    })
-
-    // Home requirement: show only the globe (no orbits/dots).
-    // Keep the code for reuse, but hide groups here.
-    satGroup.visible = false
-    activeSats.forEach((s) => {
-      if (s.orbitLine) s.orbitLine.visible = false
-    })
+    const clock = new THREE.Clock()
 
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
-      const t = clock.getElapsedTime()
+      const delta = clock.getDelta()
 
-  earthGroup.rotation.y = t * 0.085 // Faster rotation for Home
-      earthGroup.rotation.x = Math.sin(t * 0.07) * 0.02
-      
-  // Satellites are hidden on Home; skip their updates.
-  // activeSats.forEach((s) => {
-        // Move the dot ON the drawn orbit path
-  // })
+      earthGroup.rotation.y += delta * 0.05
+      clouds.rotation.y += delta * 0.065
 
+      controls.update()
       renderer.render(scene, camera)
     }
 
-    const clock = new THREE.Clock()
     animate()
-
-    const handleResize = () => {
-      camera.aspect = mount.clientWidth / mount.clientHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(mount.clientWidth, mount.clientHeight)
-    }
-    window.addEventListener('resize', handleResize)
 
     return () => {
       cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('resize', handleResize)
+      ro.disconnect()
+      if (mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement)
+      }
       renderer.dispose()
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
     }
-  }, [satMeta])
+  }, [])
 
-  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100vh' }} />
+  return (
+    <div
+      ref={mountRef}
+      className={className}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    />
+  )
 }

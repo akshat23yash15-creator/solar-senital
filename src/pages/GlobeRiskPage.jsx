@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import SatelliteDetails from '../components/SatelliteDetails'
 import GlobeRiskScene from '../components/GlobeRiskScene'
-import { fetchFullHelioRisk } from '../utils/helioApi'
+import { fetchFullHelioRisk, pickCuratedTop50Satellites } from '../utils/helioApi'
 
 export default function GlobeRiskPage() {
   const [selectedSatellite, setSelectedSatellite] = useState(null)
@@ -45,7 +45,11 @@ export default function GlobeRiskPage() {
         ? satData.all_satellites && satData.all_satellites.length > 0
           ? satData.all_satellites
           : satData.curated_top_10 || []
-        : satData.curated_top_10 || []
+        : pickCuratedTop50Satellites(
+            satData.all_satellites && satData.all_satellites.length > 0
+              ? satData.all_satellites
+              : satData.curated_top_10 || []
+          )
 
     return source
       .filter((s) => {
@@ -55,7 +59,8 @@ export default function GlobeRiskPage() {
       })
       .filter((s) => {
         if (riskFilter === 'ALL') return true
-        const lvl = String(s.level || '').toUpperCase()
+        const score = Number(s.riskScore ?? s.risk_score) || 0
+        const lvl = (s.level || (score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low')).toUpperCase()
         const target = riskFilter.toUpperCase()
         if (target === 'HIGH') return lvl === 'HIGH'
         if (target === 'MEDIUM') return lvl === 'MEDIUM' || lvl === 'NORMAL' || lvl === 'MED'
@@ -137,7 +142,7 @@ export default function GlobeRiskPage() {
                     }}
                     onClick={() => setViewMode('curated')}
                   >
-                    Curated Top 10
+                    Curated Top 50
                   </button>
                 </div>
 

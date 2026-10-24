@@ -154,3 +154,60 @@ export function pickHelioModelSatellites(satellites) {
 
   return [...high.slice(0, 3), ...medium.slice(0, 3), ...low.slice(0, 4)]
 }
+
+export function pickCuratedTop50Satellites(satellites) {
+  if (!Array.isArray(satellites) || satellites.length === 0) return []
+
+  const valid = satellites.filter((s) => {
+    const lat = s.latitude ?? s.lat
+    const lon = s.longitude ?? s.lng ?? s.lon
+    return Number.isFinite(Number(lat)) && Number.isFinite(Number(lon))
+  })
+  const pool = valid.length > 0 ? valid : satellites
+
+  const high = pool
+    .filter((s) => {
+      const lvl = String(s.level || '').toLowerCase()
+      const score = Number(s.riskScore ?? s.risk_score) || 0
+      return lvl === 'high' || score >= 70
+    })
+    .sort((a, b) => (Number(b.riskScore ?? b.risk_score) || 0) - (Number(a.riskScore ?? a.risk_score) || 0))
+
+  const medium = pool
+    .filter((s) => {
+      const lvl = String(s.level || '').toLowerCase()
+      const score = Number(s.riskScore ?? s.risk_score) || 0
+      return (lvl === 'medium' || lvl === 'normal' || lvl === 'med') || (score >= 40 && score < 70)
+    })
+    .sort((a, b) => (Number(b.riskScore ?? b.risk_score) || 0) - (Number(a.riskScore ?? a.risk_score) || 0))
+
+  const low = pool
+    .filter((s) => {
+      const lvl = String(s.level || '').toLowerCase()
+      const score = Number(s.riskScore ?? s.risk_score) || 0
+      return lvl === 'low' || score < 40
+    })
+    .sort((a, b) => (Number(b.riskScore ?? b.risk_score) || 0) - (Number(a.riskScore ?? a.risk_score) || 0))
+
+  // Balanced fixed distribution: 20 High, 15 Medium, 15 Low (total = 50 fixed curated satellites)
+  const selectedHigh = high.slice(0, 20)
+  const selectedMedium = medium.slice(0, 15)
+  const selectedLow = low.slice(0, 15)
+
+  const curated = [...selectedHigh, ...selectedMedium, ...selectedLow]
+
+  // In case any tier has fewer available, backfill remaining to reach exactly 50
+  if (curated.length < 50) {
+    const existingIds = new Set(curated.map((s) => s.id || s.name))
+    for (const s of pool) {
+      if (curated.length >= 50) break
+      const id = s.id || s.name
+      if (!existingIds.has(id)) {
+        existingIds.add(id)
+        curated.push(s)
+      }
+    }
+  }
+
+  return curated.slice(0, 50)
+}

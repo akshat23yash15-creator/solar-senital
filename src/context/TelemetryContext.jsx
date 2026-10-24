@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { fetchLivePrediction, fetchInfrastructureImpact } from '../utils/solarPredictionApi'
-import { fetchFullHelioRisk } from '../utils/helioApi'
+import { fetchFullHelioRisk, pickCuratedTop50Satellites } from '../utils/helioApi'
 
 const TelemetryContext = createContext(null)
 
@@ -84,8 +84,15 @@ export function TelemetryProvider({ children }) {
   const gridTriggers = infraData?.grid_heatmap_triggers ?? []
   const aviationAlerts = infraData?.aviation_alerts ?? []
   const automatedActions = infraData?.automated_actions ?? []
-  const curatedTop10 = satData?.curated_top_10 ?? []
   const allSatellites = satData?.all_satellites ?? []
+  const curatedTop50 = useMemo(() => {
+    const list =
+      satData?.all_satellites && satData.all_satellites.length > 0
+        ? satData.all_satellites
+        : satData?.curated_top_10 ?? []
+    return pickCuratedTop50Satellites(list)
+  }, [satData])
+  const curatedTop10 = satData?.curated_top_10 ?? curatedTop50.slice(0, 10)
 
   return (
     <TelemetryContext.Provider
@@ -103,6 +110,7 @@ export function TelemetryProvider({ children }) {
         aviationAlerts,
         automatedActions,
         curatedTop10,
+        curatedTop50,
         allSatellites,
         flareData,
         infraData,

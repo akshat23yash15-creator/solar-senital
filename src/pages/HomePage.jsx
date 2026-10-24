@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { AnimatePresence, motion as Motion } from 'framer-motion'
+import { motion as Motion } from 'framer-motion'
 import EarthScene from '../components/EarthScene'
 import PageTransition from '../components/PageTransition'
-import SatelliteDetails from '../components/SatelliteDetails'
 import { useTelemetry } from '../context/TelemetryContext'
 import '../styles/home.css'
 
@@ -17,8 +16,7 @@ function Stat({ label, value }) {
 }
 
 export default function HomePage() {
-  const [selectedSatellite, setSelectedSatellite] = useState(null)
-  const { solarWindSpeed, kpIndex, flareClass, stormEta, lastUpdated, loading, curatedTop10 } = useTelemetry()
+  const { solarWindSpeed, kpIndex, flareClass, stormEta, lastUpdated, loading } = useTelemetry()
 
   const stats = useMemo(
     () => [
@@ -52,16 +50,8 @@ export default function HomePage() {
     <PageTransition>
       <div className="home">
         <div className="canvasWrap">
-          <EarthScene
-            className="canvasWrap"
-            satellites={curatedTop10}
-            onSelectSatellite={setSelectedSatellite}
-          />
+          <EarthScene className="canvasWrap" />
         </div>
-
-        <AnimatePresence>
-          <SatelliteDetails satellite={selectedSatellite} onClose={() => setSelectedSatellite(null)} />
-        </AnimatePresence>
 
         <div className="homeOverlay">
           <div className="container">
@@ -79,16 +69,6 @@ export default function HomePage() {
                 <div className="heroActions">
                   <Link className="btn" to="/dashboard">
                     Enter Dashboard
-                  </Link>
-                  <Link
-                    className="btn"
-                    to="/flare-impact"
-                    style={{ borderColor: 'rgba(34,211,238,0.5)', color: 'var(--neonC)' }}
-                  >
-                    Flare Impact Center
-                  </Link>
-                  <Link className="btn" to="/analytics">
-                    Earth Threat Center
                   </Link>
                   <span className="pill" style={{ marginLeft: 4 }}>
                     <span
